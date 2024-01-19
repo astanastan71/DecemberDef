@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">DecemberDef</string>
     <string name="your_web_client_id">725602631335-ef06ssr2bmbf9d8nh6hc5cd85gvl85vv.apps.googleusercontent.com</string>
+    <string name="get_started">Начать</string>
+    <string name="login">Войти</string>
+    <string name="password">Пароль</string>
+    <string name="log_in">Войти</string>
+    <string name="Log_in_text">Нет аккаунта?</string>
+    <string name="sign_up">Регистрация</string>
 </resources>
