@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.decemberdef.screens.main.MainScreen
 import com.example.decemberdef.ui.CreateDataFire
 import com.example.decemberdef.ui.theme.DecemberDefTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -35,7 +36,7 @@ class MainActivity : ComponentActivity() {
 
 
     private fun googleSignIn(
-    ){
+    ) {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.your_web_client_id))
             .requestEmail()
@@ -54,7 +55,8 @@ class MainActivity : ComponentActivity() {
                 val account = task.getResult(ApiException::class.java)
                 firebaseAuthWithGoogle(account.idToken!!)
             } catch (e: ApiException) {
-                Toast.makeText(this, "Google sign in failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Google sign in failed: ${e.message}", Toast.LENGTH_SHORT)
+                    .show()
             }
         }
     }
@@ -65,7 +67,8 @@ class MainActivity : ComponentActivity() {
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     val user = auth.currentUser
-                    Toast.makeText(this, "Signed in as ${user?.displayName}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Signed in as ${user?.displayName}", Toast.LENGTH_SHORT)
+                        .show()
                     startActivity(Intent(this, MainActivity::class.java))
                     finish()
                 } else {
@@ -78,7 +81,7 @@ class MainActivity : ComponentActivity() {
         authLocal: FirebaseAuth,
         email: String,
         password: String
-    ){
+    ) {
         val credential = EmailAuthProvider.getCredential(email, password)
         authLocal.currentUser!!.linkWithCredential(credential)
             .addOnCompleteListener(this) { task ->
@@ -104,18 +107,17 @@ class MainActivity : ComponentActivity() {
 
     private fun anonSign(
         authLocal: FirebaseAuth
-    ){
+    ) {
         authLocal.signInAnonymously()
-            .addOnCompleteListener(this) {task ->
-                if (task.isSuccessful){
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
                     Log.d(TAG, "signInAnonymously:success")
                     Toast.makeText(
                         baseContext,
                         "Authentication succeeded.",
                         Toast.LENGTH_SHORT,
                     ).show()
-                }
-                else {
+                } else {
                     Log.w(TAG, "signInAnonymously:failure", task.exception)
                     Toast.makeText(
                         baseContext,
@@ -212,89 +214,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Column() {
-                        Row(modifier = Modifier.weight(1f)) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                CreateUser(
-                                    doTheTing = {
-                                        createUser(
-                                            auth,
-                                            "rashidov.astan@mail.ru",
-                                            "password"
-                                        )
-                                    },
-                                    text = "Create"
-                                )
-                            }
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                CreateUser(
-                                    doTheTing = { verificationUser() },
-                                    text = "verification"
-                                )
-                            }
-                        }
-                        Row(modifier = Modifier.weight(1f)) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                CreateUser(
-                                    doTheTing = {
-                                        signOut()
-                                    },
-                                    text = "Log Out"
-                                )
-                            }
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                CreateUser(doTheTing = {
-                                    signIn(
-                                        auth,
-                                        "rashidov.astan@mail.ru",
-                                        "password"
-                                    )
-                                }, text = "sign In")
-                            }
-                        }
-                        Row(modifier = Modifier.weight(1f)) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                CreateUser(
-                                    doTheTing = {
-                                        anonSign(auth)
-                                    },
-                                    text = "AnonSign"
-                                )
-                            }
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                CreateUser(doTheTing = {
-                                    anonSignInWithCred(
-                                        auth,
-                                        "oleoleka@mail.ru",
-                                        "password"
-                                    )
-                                }, text = "Anon email sign")
-                            }
-                        }
-                        Row(modifier = Modifier.weight(1f)) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                CreateUser(
-                                    doTheTing = {
-                                        emulatorTest.createCollection()
-                                    },
-                                    text = "create two users"                                )
-                            }
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                CreateUser(doTheTing = {
-                                    CreateDataFire().readCollection()
-                                }, text = "Read DB Data")
-                            }
-                        }
-                    }
-
+                    MainScreen()
 
                 }
             }
