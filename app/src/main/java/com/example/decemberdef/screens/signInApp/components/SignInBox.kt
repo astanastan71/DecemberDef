@@ -39,8 +39,6 @@ fun LoginBox(
     Column() {
         Box(
             modifier = modifier
-//                .clip(RoundedCornerShape(15.dp))
-//                .fillMaxWidth()
 
         ) {
             Column() {
@@ -105,7 +103,9 @@ fun LoginBox(
 }
 
 @Composable
-fun ToSignApp() {
+fun ToSignBox(
+    onSignUpButtonClicked: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxHeight()
@@ -122,7 +122,7 @@ fun ToSignApp() {
             horizontalArrangement = Arrangement.Center
         ) {
             Button(
-                onClick = { }
+                onClick = onSignUpButtonClicked
             ) {
                 Text(
                     text = stringResource(id = R.string.sign_up)
@@ -149,10 +149,13 @@ fun textEdit(
     modifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
-    icon: @Composable (() -> Unit) = {}
+    icon: @Composable (() -> Unit) = {},
+    icon2: @Composable (() -> Unit) = {},
+    isValid: Boolean = false
 ) {
     TextField(
-        trailingIcon = icon,
+        trailingIcon = if (!isValid) icon
+        else icon2,
         label = { Text(stringResource(label)) },
         singleLine = true,
         keyboardOptions = keyboardOptions,
@@ -179,6 +182,9 @@ fun LoginAppPreview() {
 
 
                 )
+            ToSignBox {
+                {}
+            }
 
         }
 

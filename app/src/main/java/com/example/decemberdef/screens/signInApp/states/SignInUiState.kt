@@ -1,9 +1,6 @@
-package com.example.decemberdef.screens.main.states
+package com.example.decemberdef.screens.signInApp.states
 
-import com.google.firebase.auth.FirebaseUser
-
-data class MainScreenUiState(
-    val isAuthorised: Boolean = true,
+data class SignInUiState(
     val loginPasswordState: LoginPasswordState = LoginPasswordState()
 )
 
