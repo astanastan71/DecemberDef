@@ -1,4 +1,4 @@
-package com.example.decemberdef.screens.authScreen.components
+package com.example.decemberdef.ui.screens.authScreen.components
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CenterAlignedTopAppBar

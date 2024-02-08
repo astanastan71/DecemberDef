@@ -15,8 +15,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.decemberdef.screens.authScreen.AuthScreen
+import com.example.decemberdef.ui.screens.authScreen.AuthScreen
 import com.example.decemberdef.ui.CreateDataFire
+import com.example.decemberdef.ui.screens.mainScreen.MainApp
+import com.example.decemberdef.ui.screens.testScreen.testNumber
 import com.example.decemberdef.ui.theme.DecemberDefTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -103,6 +105,34 @@ class MainActivity : ComponentActivity() {
 
     }
 
+    private fun signUp(
+        authLocal: FirebaseAuth,
+        email: String,
+        password: String
+    ) {
+        authLocal.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    // Sign in success, update UI with the signed-in user's information
+                    Log.d(TAG, "createUserWithEmail:success")
+                    Toast.makeText(
+                        baseContext,
+                        "Authentication succeeded.",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                    val user = auth.currentUser
+                } else {
+                    // If sign in fails, display a message to the user.
+                    Log.w(TAG, "createUserWithEmail:failure", task.exception)
+                    Toast.makeText(
+                        baseContext,
+                        "Authentication failed.",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+            }
+    }
+
     private fun anonSign(
         authLocal: FirebaseAuth
     ) {
@@ -155,7 +185,7 @@ class MainActivity : ComponentActivity() {
 
     }
 
-    private fun signOut() {
+    fun signOut() {
         auth.signOut()
         Log.w(TAG, "signOut")
         Toast.makeText(
@@ -214,6 +244,16 @@ class MainActivity : ComponentActivity() {
                 ) {
                     AuthScreen()
 
+//                    if (auth.currentUser == null) {
+//                        Button(onClick = { signIn(auth, "oleoleka@mail.ru", "password") }) {
+//                            Text(text = "signing")
+//                        }
+//                    }
+//                    else {
+//                        MainApp()
+//                    }
+
+
                 }
             }
         }
@@ -221,21 +261,21 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        val currentUser = auth.currentUser
-        val name = currentUser?.isEmailVerified
-        if (currentUser != null) {
-            Toast.makeText(
-                baseContext,
-                name.toString(),
-                Toast.LENGTH_SHORT,
-            ).show()
-        } else {
-            Toast.makeText(
-                baseContext,
-                "Not Logged",
-                Toast.LENGTH_SHORT,
-            ).show()
-        }
+//        val currentUser = auth.currentUser
+//        val name = currentUser?.isEmailVerified
+//        if (currentUser != null) {
+//            Toast.makeText(
+//                baseContext,
+//                name.toString(),
+//                Toast.LENGTH_SHORT,
+//            ).show()
+//        } else {
+//            Toast.makeText(
+//                baseContext,
+//                "Not Logged",
+//                Toast.LENGTH_SHORT,
+//            ).show()
+//        }
     }
 }
 

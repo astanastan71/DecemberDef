@@ -1,12 +1,16 @@
-package com.example.decemberdef.screens.signInApp
+package com.example.decemberdef.ui.screens.signInApp
 
+import android.content.ContentValues.TAG
+import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.decemberdef.screens.signInApp.states.LoginPasswordState
-import com.example.decemberdef.screens.signInApp.states.SignInUiState
+import com.example.decemberdef.ui.screens.authScreen.states.AuthUiState
+import com.example.decemberdef.ui.screens.signInApp.states.LoginPasswordState
+import com.example.decemberdef.ui.screens.signInApp.states.SignInUiState
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -16,10 +20,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.lang.Exception
 
 
 sealed interface LogInState {
-    data class Success(val user: FirebaseUser) : LogInState
+    object Success : LogInState
     object Error : LogInState
     object Loading : LogInState
 }
@@ -33,49 +38,60 @@ class SignInViewModel : ViewModel() {
         private set
 
     init {
-//        val user = auth.currentUser
-//        if (user != null) {
-//            _uiState.update { currentState ->
-//                currentState.copy(
-//                    isAuthorised = true
-//                )
-//            }
-//        } else {
-//            _uiState.update { currentState ->
-//                currentState.copy(
-//                    isAuthorised = false
-//                )
-//            }
-//        }
     }
 
     fun changeApp() {
 
     }
 
-    fun signIn(login: String, password: String) {
+    fun anonSign(){
         viewModelScope.launch {
-            auth.signInWithEmailAndPassword(login, password).addOnCompleteListener { task ->
+            auth.signInAnonymously().addOnCompleteListener { task ->
                 logInState = if (task.isSuccessful) {
-                    auth.currentUser?.let { LogInState.Success(it) }!!
+                    LogInState.Success
+
                 } else {
                     LogInState.Error
 
+                }
+                if (task.isCanceled) {
+                    Log.e(TAG, task.exception.toString())
                 }
             }
         }
     }
 
+    fun reset(){
+        logInState=LogInState.Loading
+    }
+
+    fun signIn(login: String, password: String) {
+        viewModelScope.launch {
+            auth.signInWithEmailAndPassword(login, password).addOnCompleteListener { task ->
+                logInState = if (task.isSuccessful) {
+                    LogInState.Success
+                } else {
+                    LogInState.Error
+
+                }
+                if (task.isCanceled) {
+                    Log.e(TAG, task.exception.toString())
+                }
+            }
+
+        }
+    }
+
 
     fun updateLoginTextState(newValueLogin: String, newValuePassword: String) {
-            _uiState.update { currentState ->
-                currentState.copy(
-                    loginPasswordState = LoginPasswordState(
-                        newValueLogin,
-                        newValuePassword
-                    )
+        _uiState.update { currentState ->
+            currentState.copy(
+                loginPasswordState = LoginPasswordState(
+                    newValueLogin,
+                    newValuePassword
                 )
-            }
+            )
+        }
     }
 
 

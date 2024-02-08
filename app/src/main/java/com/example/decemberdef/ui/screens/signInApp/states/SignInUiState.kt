@@ -1,4 +1,4 @@
-package com.example.decemberdef.screens.signInApp.states
+package com.example.decemberdef.ui.screens.signInApp.states
 
 data class SignInUiState(
     val loginPasswordState: LoginPasswordState = LoginPasswordState()
