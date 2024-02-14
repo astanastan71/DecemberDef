@@ -15,7 +15,7 @@ import com.example.decemberdef.ui.theme.DecemberDefTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun topAppBar(modifier: Modifier = Modifier) {
+fun topAppBarAuthScreen(modifier: Modifier = Modifier) {
     CenterAlignedTopAppBar(title = {
         Text(
             text = stringResource(id = R.string.app_name),
@@ -31,7 +31,7 @@ fun topAppBar(modifier: Modifier = Modifier) {
 fun HeaderPreview() {
     DecemberDefTheme {
         Surface() {
-            topAppBar()
+            topAppBarAuthScreen()
         }
 
 

@@ -13,8 +13,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cmv3.screens.Auth.LoginBox
 import com.example.cmv3.screens.Auth.ToSignBox
-import com.example.decemberdef.ui.screens.authScreen.AuthScreenViewModel
-import com.example.decemberdef.ui.screens.mainScreen.MainApp
 import com.example.decemberdef.ui.theme.DecemberDefTheme
 
 @Composable

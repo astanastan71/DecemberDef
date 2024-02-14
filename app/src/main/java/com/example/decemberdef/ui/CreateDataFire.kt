@@ -9,13 +9,6 @@ import com.google.firebase.firestore.firestoreSettings
 class CreateDataFire {
     private val db = Firebase.firestore
 
-    init {
-        db.useEmulator("127.0.0.1",8080)
-        db.firestoreSettings = firestoreSettings {
-            isPersistenceEnabled = false
-        }
-    }
-
     fun createCollection() {
         val user = hashMapOf(
             "first" to "aoba",

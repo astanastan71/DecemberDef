@@ -15,6 +15,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
+import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,6 +34,7 @@ class SignInViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(SignInUiState())
     val uiState: StateFlow<SignInUiState> = _uiState.asStateFlow()
     private var auth: FirebaseAuth = Firebase.auth
+    val db = Firebase.firestore
 
     var logInState: LogInState by mutableStateOf(LogInState.Loading)
         private set
@@ -41,8 +43,15 @@ class SignInViewModel : ViewModel() {
     }
 
     fun changeApp() {
+        val docRef = db.collection("cities").document("SF")
 
     }
+
+    fun createData(){
+
+    }
+
+
 
     fun anonSign(){
         viewModelScope.launch {
