@@ -17,7 +17,7 @@ import com.example.decemberdef.ui.theme.DecemberDefTheme
 
 @Composable
 fun SignInApp(
-    viewModel: SignInViewModel = viewModel(),
+    viewModel: SignInViewModel = viewModel(factory = SignInViewModel.Factory),
     onSignUpButtonClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {

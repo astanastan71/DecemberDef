@@ -7,8 +7,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.decemberdef.MainApplication
+import com.example.decemberdef.data.MainRepository
 import com.example.decemberdef.ui.screens.authScreen.states.AuthUiState
+import com.example.decemberdef.ui.screens.homeScreen.MainViewModel
 import com.example.decemberdef.ui.screens.signInApp.states.LoginPasswordState
 import com.example.decemberdef.ui.screens.signInApp.states.SignInUiState
 import com.google.firebase.Firebase
@@ -30,11 +36,13 @@ sealed interface LogInState {
     object Loading : LogInState
 }
 
-class SignInViewModel : ViewModel() {
+class SignInViewModel(
+    private val mainRepository: MainRepository
+) : ViewModel() {
     private val _uiState = MutableStateFlow(SignInUiState())
     val uiState: StateFlow<SignInUiState> = _uiState.asStateFlow()
     private var auth: FirebaseAuth = Firebase.auth
-    val db = Firebase.firestore
+    private val db = Firebase.firestore
 
     var logInState: LogInState by mutableStateOf(LogInState.Loading)
         private set
@@ -42,36 +50,14 @@ class SignInViewModel : ViewModel() {
     init {
     }
 
-    fun changeApp() {
-        val docRef = db.collection("cities").document("SF")
-
-    }
-
-    fun createData(){
-
-    }
-
-
-
-    fun anonSign(){
+    fun anonSign() {
         viewModelScope.launch {
-            auth.signInAnonymously().addOnCompleteListener { task ->
-                logInState = if (task.isSuccessful) {
-                    LogInState.Success
-
-                } else {
-                    LogInState.Error
-
-                }
-                if (task.isCanceled) {
-                    Log.e(TAG, task.exception.toString())
-                }
-            }
+            logInState = mainRepository.anonSignInCheck()
         }
     }
 
-    fun reset(){
-        logInState=LogInState.Loading
+    fun reset() {
+        logInState = LogInState.Loading
     }
 
     fun signIn(login: String, password: String) {
@@ -100,6 +86,17 @@ class SignInViewModel : ViewModel() {
                     newValuePassword
                 )
             )
+        }
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application =
+                    (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MainApplication)
+                val mainRepository = application.container.mainRepository
+                SignInViewModel(mainRepository = mainRepository)
+            }
         }
     }
 

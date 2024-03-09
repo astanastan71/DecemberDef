@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.decemberdef.ui.CreateDataFire
+import com.example.decemberdef.ui.screens.authScreen.AuthScreen
 import com.example.decemberdef.ui.screens.homeScreen.components.startButton
 import com.example.decemberdef.ui.theme.DecemberDefTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -26,7 +27,9 @@ import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private lateinit var auth: FirebaseAuth
@@ -241,7 +244,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
 //                    AuthScreen()
-                    startButton(onClickStart = {})
+                    AuthScreen()
 
 
                 }

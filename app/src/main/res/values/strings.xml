@@ -12,4 +12,15 @@
     <string name="passwordRepeat">Повторите пароль</string>
     <string name="sign_up_confirm">Зарегистрироваться</string>
     <string name="anon_sign">Войти анонимно</string>
+    <string name="task_adding">Добавить задачу</string>
+    <string name="start">Начать задачу</string>
+    <string name="expand_button_content_description">\"Узнать подробнее\"</string>
+    <string name="log_out">Выйти</string>
+    <string name="task_show">Задача</string>
+    <string name="direction">Направления</string>
+    <string name="not_found">Без прогресса</string>
+    <string name="set_end_date">Через</string>
+    <string name="add">Добавить</string>
+    <string name="edit">Изменить</string>
+    <string name="is_done">Выполнено ли?</string>
 </resources>
