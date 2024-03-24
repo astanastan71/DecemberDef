@@ -14,6 +14,7 @@ import com.example.decemberdef.data.MainRepository
 import com.example.decemberdef.data.Task
 import com.example.decemberdef.ui.screens.listApp.states.DirectionListUiState
 import com.google.firebase.Timestamp
+import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,11 +29,11 @@ sealed interface TaskGetState {
     object Error : TaskGetState
 }
 
-sealed interface CollectionsListGetState {
-    data class Success(val directions: Flow<List<Direction>>) : CollectionsListGetState
-    object Error : CollectionsListGetState
-    object Loading : CollectionsListGetState
-}
+//sealed interface CollectionsListGetState {
+//    data class Success(val directions: Flow<List<Direction>>) : CollectionsListGetState
+//    object Error : CollectionsListGetState
+//    object Loading : CollectionsListGetState
+//}
 
 class DirectionListViewModel(
     private val mainRepository: MainRepository
@@ -41,27 +42,75 @@ class DirectionListViewModel(
     var taskGetState: TaskGetState by mutableStateOf(TaskGetState.Loading)
         private set
 
-    private val _uiState = MutableStateFlow(DirectionListUiState())
+    private val _uiState = MutableStateFlow(DirectionListUiState(null))
     val uiState: StateFlow<DirectionListUiState> = _uiState.asStateFlow()
 
-    var collectionsListGetState: CollectionsListGetState by mutableStateOf(CollectionsListGetState.Loading)
-        private set
-
     init {
-        getCollectionsData()
     }
 
-    private fun changeCurrentDirection(directionId: String) {
+    fun getUser():String?{
+        val user = mainRepository.getUser()
+        return user?.uid
+    }
+
+    fun setTaskCompletionStatus(
+        status: Boolean,
+        uID: String,
+        directionId: String,
+        directionProgress: Int
+    ) {
+        viewModelScope.launch {
+            mainRepository.setTaskCompletionStatus(
+                status, uID, directionId, directionProgress
+            )
+
+        }
+
+    }
+
+    fun updateCurrentLink(link: String){
         _uiState.update { currentState ->
             currentState.copy(
-                currentDirection = directionId
+                currentLink = link
             )
         }
+
+
+    }
+
+    fun setTaskDescription(
+        text:RichTextState,
+        directionId: String,
+        taskId: String
+    ){
+        viewModelScope.launch {
+            mainRepository.setTaskDescription(text, directionId, taskId)
+        }
+    }
+
+    private fun changeCurrentDirection(direction: Direction) {
+        viewModelScope.launch {
+            _uiState.update { currentState ->
+                currentState.copy(
+                    currentDirection = mainRepository.getCurrentDirection(direction.uid)
+                )
+            }
+        }
+
+    }
+
+    fun setDirectionDescription(text: RichTextState, uID: String) {
+        viewModelScope.launch {
+            mainRepository.setDirectionDescription(text, uID)
+        }
+
     }
 
     fun setDateAndTimeTaskStart(
         selectedDate: Long,
-        directionId: String, taskId: String, isStart: Boolean
+        directionId: String,
+        taskId: String,
+        isStart: Boolean
     ) {
         viewModelScope.launch {
             mainRepository.setTaskDateStart(
@@ -73,37 +122,28 @@ class DirectionListViewModel(
         }
     }
 
-    fun getDirectionTasks(directionId: String) {
+    fun getDirectionTasks(direction: Direction) {
         viewModelScope.launch {
-            taskGetState = mainRepository.getDirectionTasks(directionId)
+            taskGetState = mainRepository.getDirectionTasks(direction.uid)
         }
-        changeCurrentDirection(directionId)
+        changeCurrentDirection(direction)
     }
 
-    fun addCustomDirection(){
+    fun addCustomDirection() {
         viewModelScope.launch {
             mainRepository.addCustomDirection()
         }
     }
 
-    fun setDirectionStatus(isDone: Boolean, uID: String){
+    fun addCustomTask(direction: Direction) {
         viewModelScope.launch {
-            mainRepository.setDirectionStatus(isDone, uID)
+            mainRepository.addCustomTask(direction = direction)
         }
     }
 
-    private fun getCollectionsData() {
+    fun setDirectionStatus(isDone: Boolean, uID: String) {
         viewModelScope.launch {
-            collectionsListGetState = try {
-                if (mainRepository.getDirectionsList() != null) {
-                    CollectionsListGetState.Success(mainRepository.getDirectionsList()!!)
-                } else {
-                    CollectionsListGetState.Loading
-                }
-
-            } catch (e: Exception) {
-                CollectionsListGetState.Error
-            }
+            mainRepository.setDirectionStatus(isDone, uID)
         }
     }
 

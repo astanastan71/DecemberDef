@@ -1,18 +1,13 @@
 package com.example.decemberdef.ui.screens.homeScreen
 
-import android.content.ContentValues
 import android.content.ContentValues.TAG
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.decemberdef.MainApplication
-import com.example.decemberdef.data.Direction
 import com.example.decemberdef.data.MainRepository
 import com.example.decemberdef.data.User
 import com.example.decemberdef.ui.screens.homeScreen.states.HomeScreenState
@@ -60,7 +55,7 @@ class MainViewModel(
 
     fun taskAdd(textState: RichTextState) {
         viewModelScope.launch {
-            mainRepository.addCustomTask(textState)
+            mainRepository.addCustomTaskAndDirection(textState)
         }
     }
 

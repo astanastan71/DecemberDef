@@ -10,17 +10,32 @@ import kotlinx.coroutines.flow.Flow
 interface MainRepository {
     suspend fun getUserData(): User
     fun signOut()
-    suspend fun addCustomTask(text: RichTextState)
+    suspend fun addCustomTaskAndDirection(text: RichTextState)
+    suspend fun addCustomTask(direction: Direction)
     suspend fun addCustomDirection()
     fun getDirectionsList(): Flow<List<Direction>>?
     fun getUser(): FirebaseUser?
+    suspend fun getCurrentDirection(directionId: String): Flow<Direction>?
     suspend fun anonSignInCheck(): LogInState
     suspend fun getDirectionTasks(directionId: String): TaskGetState
+    suspend fun getDirectionTasksForAll(directionId: String): Flow<MutableList<Task>>?
     suspend fun setTaskDateStart(
         taskId: String,
         directionId: String,
         time: Timestamp,
         isStart: Boolean
     )
+
+    suspend fun setTaskCompletionStatus(
+        status: Boolean,
+        uID: String,
+        directionId: String,
+        directionProgress: Int
+    )
+
     suspend fun setDirectionStatus(isDone: Boolean, directionId: String)
+    suspend fun setDirectionDescription(text: RichTextState, directionId: String)
+    suspend fun setTaskDescription(text: RichTextState, directionId: String, taskId: String)
+    suspend fun collectTaskData(directions: List<Direction>): List<Task>
+    suspend fun getOtherUserDirection(userID: String): Flow<List<Direction>>?
 }

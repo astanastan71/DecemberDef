@@ -31,7 +31,7 @@ fun navigationBar(navController: NavController) {
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.DirectionChooser,
-        BottomNavItem.TaskBuilder
+        BottomNavItem.Calendar
     )
     NavigationBar() {
         val navBackStackEntry by navController.currentBackStackEntryAsState()

@@ -7,6 +7,7 @@ import com.example.decemberdef.ui.screens.signInApp.LogInState
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
@@ -38,7 +39,7 @@ class DefaultMainRepository(
         )
     }
 
-    override suspend fun addCustomTask(textState: RichTextState) {
+    override suspend fun addCustomTaskAndDirection(textState: RichTextState) {
         if (user != null) {
             val customCollectionPath = db.collection("users")
                 .document(user.uid)
@@ -51,7 +52,8 @@ class DefaultMainRepository(
                 .set(
                     Direction(
                         uid = customCollectionId,
-                        progress = 1
+                        progress = 0,
+                        count = 1
                     )
                 )
 
@@ -71,6 +73,50 @@ class DefaultMainRepository(
                 .document(customTaskId).set(task)
         } else {
             Log.e(TAG, "USER IS NULL")
+        }
+    }
+
+    override suspend fun addCustomTask(direction: Direction) {
+        try {
+            if (user != null) {
+                val customCollectionPath = db.collection("users")
+                    .document(user.uid)
+                    .collection("directions")
+                val customCollectionId = customCollectionPath
+                    .document(direction.uid)
+                    .collection("tasks")
+                    .document().id
+                customCollectionPath
+                    .document(direction.uid)
+                    .collection("tasks")
+                    .document(customCollectionId)
+                    .set(
+                        Task(
+                            uid = customCollectionId
+                        )
+                    )
+                    .addOnCompleteListener {
+                        customCollectionPath.document(direction.uid).update(
+                            "count", direction.count+1
+                        ).addOnSuccessListener {
+                            Log.d(
+                                TAG,
+                                "DocumentSnapshot successfully updated!"
+                            )
+                        }
+                            .addOnFailureListener { e -> Log.w(TAG, "Error updating document", e) }
+                        Log.d(
+                            TAG,
+                            "DocumentSnapshot successfully added!"
+                        )
+                    }
+                    .addOnFailureListener {
+                        Log.w(TAG, "Error", it)
+                    }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Error:", e)
+
         }
     }
 
@@ -131,6 +177,25 @@ class DefaultMainRepository(
         }
     }
 
+    private fun DocumentReference.snapshotFlow(): Flow<Direction> = callbackFlow {
+        val listenerRegistration = addSnapshotListener() { value, error ->
+            if (error != null) {
+                close()
+                return@addSnapshotListener
+            }
+            if (value != null) {
+                val doc = value?.toObject(Direction::class.java)
+                if (doc != null) {
+                    trySend(doc)
+                }
+            }
+
+        }
+        awaitClose {
+            listenerRegistration.remove()
+        }
+    }
+
 
     override fun getDirectionsList(): Flow<List<Direction>>? {
         return if (user != null) {
@@ -145,6 +210,7 @@ class DefaultMainRepository(
             null
         }
     }
+
 
     override suspend fun getDirectionTasks(directionId: String): TaskGetState {
         try {
@@ -169,6 +235,65 @@ class DefaultMainRepository(
             Log.w(TAG, "MESSAGE: Error getting documents: ", e)
             return TaskGetState.Error
         }
+    }
+
+    override suspend fun getDirectionTasksForAll(directionId: String): Flow<MutableList<Task>>? {
+        try {
+            return if (user != null) {
+                Log.d(TAG, "MESSAGE: User is not NULL")
+                db.collection("users")
+                    .document(user.uid)
+                    .collection("directions")
+                    .document(directionId)
+                    .collection("tasks")
+                    .snapshotFlow()
+                    .map { querySnapshot ->
+                        querySnapshot.toObjects(Task::class.java)
+                    }
+            } else {
+                Log.d(TAG, "MESSAGE: user is NULL")
+                return null
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "MESSAGE: Error getting documents: ", e)
+            return null
+        }
+    }
+
+    override suspend fun collectTaskData(directions: List<Direction>): List<Task> {
+        val collectedTask: MutableList<Task> = mutableListOf()
+        return if (user != null) {
+            for (direction in directions) {
+                Log.d(TAG, "MESSAGE: collection ${direction.uid}")
+                val singleDirectionTasks =
+                    db.collection("users")
+                        .document(user.uid)
+                        .collection("directions")
+                        .document(direction.uid)
+                        .collection("tasks")
+                        .get().await().toObjects(Task::class.java)
+                collectedTask += singleDirectionTasks
+            }
+            Log.d(TAG, "MESSAGE: Returning collected Tasks")
+            collectedTask
+        } else {
+            mutableListOf()
+        }
+    }
+
+    override suspend fun getOtherUserDirection(userID: String): Flow<List<Direction>>? {
+        return if (user != null) {
+            db.collection("users")
+                .document(userID)
+                .collection("directions")
+                .snapshotFlow()
+                .map { querySnapshot ->
+                    querySnapshot.toObjects(Direction::class.java)
+                }
+        } else {
+            null
+        }
+
     }
 
     override suspend fun setTaskDateStart(
@@ -235,6 +360,101 @@ class DefaultMainRepository(
 
     }
 
+    override suspend fun setDirectionDescription(text: RichTextState, directionId: String) {
+        if (user != null) {
+            val customCollectionPath = db.collection("users")
+                .document(user.uid)
+                .collection("directions")
+                .document(directionId)
+
+            customCollectionPath
+                .update(
+                    "description", text.toHtml()
+                )
+                .addOnSuccessListener {
+                    Log.d(
+                        TAG,
+                        "DocumentSnapshot successfully updated! $text"
+                    )
+                }
+                .addOnFailureListener { e -> Log.w(TAG, "Error updating document", e) }
+        }
+    }
+
+    override suspend fun setTaskDescription(
+        text: RichTextState,
+        directionId: String,
+        taskId: String
+    ) {
+        if (user != null) {
+            val customCollectionPath = db.collection("users")
+                .document(user.uid)
+                .collection("directions")
+                .document(directionId)
+                .collection("tasks")
+                .document(taskId)
+
+            customCollectionPath
+                .update(
+                    "description", text.toHtml()
+                )
+                .addOnSuccessListener {
+                    Log.d(
+                        TAG,
+                        "DocumentSnapshot successfully updated! $text"
+                    )
+                }
+                .addOnFailureListener { e -> Log.w(TAG, "Error updating document", e) }
+        }
+
+    }
+
+    override suspend fun setTaskCompletionStatus(
+        status: Boolean,
+        uID: String,
+        directionId: String,
+        directionProgress: Int
+    ) {
+        if (user != null) {
+            val customCollectionPath = db.collection("users")
+                .document(user.uid)
+                .collection("directions")
+                .document(directionId)
+
+            customCollectionPath
+                .collection("tasks")
+                .document(uID)
+                .update(
+                    "completed", status
+                )
+                .addOnSuccessListener {
+                    if (status) {
+                        customCollectionPath.update(
+                            "progress", directionProgress + 1
+                        )
+                        Log.d(
+                            TAG,
+                            "DocumentSnapshot successfully updated! $directionProgress"
+                        )
+                    } else {
+                        customCollectionPath.update(
+                            "progress", directionProgress - 1
+                        )
+                        Log.d(
+                            TAG,
+                            "DocumentSnapshot successfully updated! $directionProgress"
+                        )
+                    }
+                    Log.d(
+                        TAG,
+                        "DocumentSnapshot successfully updated! $status"
+                    )
+                }
+                .addOnFailureListener { e -> Log.w(TAG, "Error updating document", e) }
+        }
+
+    }
+
 //        val userCollection: MutableList<Task> = mutableListOf()
 //        try {
 //            val collectionSnapshot = getTasksFromFirestore(directionId)
@@ -276,6 +496,19 @@ class DefaultMainRepository(
 
     override fun getUser(): FirebaseUser? {
         return user
+    }
+
+    override suspend fun getCurrentDirection(directionId: String): Flow<Direction>? {
+        return if (user != null) {
+            return db.collection("users")
+                .document(user.uid)
+                .collection("directions")
+                .document(directionId)
+                .snapshotFlow()
+        } else {
+            return null
+        }
+
     }
 
     override suspend fun anonSignInCheck(): LogInState {

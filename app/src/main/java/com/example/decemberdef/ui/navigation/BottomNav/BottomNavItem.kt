@@ -19,8 +19,8 @@ sealed class BottomNavItem(
         R.drawable.direction_button,
         Route.DirectionsScreen.route
     )
-    object TaskBuilder : BottomNavItem(
-        "Задача",
+    object Calendar : BottomNavItem(
+        "Календарь",
         R.drawable.task_button,
         Route.TaskScreen.route
     )

@@ -1,8 +1,5 @@
 package com.example.decemberdef.data
 
-import android.os.Build
-import androidx.annotation.RequiresApi
-import java.time.LocalDateTime
 import com.google.firebase.Timestamp
 import java.util.Date
 
