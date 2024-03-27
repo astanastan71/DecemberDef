@@ -6,11 +6,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -24,6 +27,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -46,6 +51,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.example.decemberdef.R
 import com.example.decemberdef.data.Direction
@@ -61,7 +67,9 @@ fun taskList(
     onCompletionStatusClick: (Boolean, String) -> Unit,
     onTaskDescriptionClick: (RichTextState, String) -> Unit,
     viewModel: DirectionListViewModel,
-    tasks: List<Task>
+    tasks: List<Task>,
+    deleteTask: (Task) -> Unit,
+    onTitleChange: (String, String) -> Unit
 ) {
     var addList: MutableList<Task> = mutableListOf()
     addList.add(
@@ -85,7 +93,9 @@ fun taskList(
                 modifier = Modifier.padding(8.dp),
                 onDateTimeConfirm = onDateTimeConfirm,
                 onCompletionStatusClick = onCompletionStatusClick,
-                onTaskDescriptionClick = onTaskDescriptionClick
+                onTaskDescriptionClick = onTaskDescriptionClick,
+                onTitleChange = onTitleChange,
+                deleteTask = deleteTask
             )
         }
     }
@@ -125,8 +135,11 @@ fun taskItem(
     item: Task,
     readOnly: Boolean = false,
     onDateTimeConfirm: (Long, String, Boolean) -> Unit = { _, _, _ -> },
-    onCompletionStatusClick: (Boolean, String) -> Unit = {_,_ -> },
-    onTaskDescriptionClick: (RichTextState, String)-> Unit,
+    onCompletionStatusClick: (Boolean, String) -> Unit = { _, _ -> },
+    onTaskDescriptionClick: (RichTextState, String) -> Unit,
+    linkItem: Boolean = false,
+    onTitleChange: (String, String) -> Unit = { _, _ -> },
+    deleteTask: (Task) -> Unit = { _ -> },
     modifier: Modifier = Modifier
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -135,6 +148,7 @@ fun taskItem(
     val dateStateStart = rememberDatePickerState(initialDisplayMode = DisplayMode.Input)
     val dateStateEnd = rememberDatePickerState(initialDisplayMode = DisplayMode.Input)
     var isDone by remember { mutableStateOf(item.completed) }
+    val openDialog = remember { mutableStateOf(false) }
 
     taskEditorState
         .toggleSpanStyle(
@@ -143,6 +157,17 @@ fun taskItem(
                 fontWeight = FontWeight.Bold
             )
         )
+
+    if (openDialog.value) {
+        titleChangeDialog(
+            onConfirmation = { text ->
+                onTitleChange(text, item.uid)
+                openDialog.value = false
+            },
+            onDismissRequest = {
+                openDialog.value = false
+            })
+    }
     Card(
         modifier = modifier
     ) {
@@ -172,6 +197,7 @@ fun taskItem(
                     .fillMaxWidth()
                     .padding(4.dp)
                     .clickable {
+                        openDialog.value = true
                     },
                 horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.Center
@@ -229,7 +255,7 @@ fun taskItem(
                             )
                         )
                     }
-                    Column(modifier = Modifier.weight(1f)) {
+                    Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                         IconButton(onClick = {
                             if (readOnly) {
                             } else {
@@ -244,28 +270,65 @@ fun taskItem(
                                 tint = if (isDone)
                                     Color.Green
                                 else
-                                    Color.Red
+                                    Color.Red,
+                                modifier = Modifier.padding(5.dp)
                             )
                         }
 
                     }
                 }
-                if (!readOnly) {
-                    dateTimeItem(
-                        dateState = dateStateStart,
-                        dateItem = item.timeStart.toDate().toLocaleString(),
-                        item = item,
-                        onDateTimeConfirm = onDateTimeConfirm,
-                        isStart = true
-                    )
-                    dateTimeItem(
-                        dateState = dateStateEnd,
-                        dateItem = item.timeEnd.toDate().toLocaleString(),
-                        item = item,
-                        onDateTimeConfirm = onDateTimeConfirm,
-                        isStart = false
-                    )
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                        IconButton(onClick = {
+                            deleteTask(item)
+                        }
+                        ) {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(id = R.drawable.delete),
+                                tint = MaterialTheme.colorScheme.primary,
+                                contentDescription = stringResource(R.string.delete),
+                                modifier = Modifier.padding(5.dp)
+                            )
+                        }
+
+                    }
+
                 }
+                Row() {
+                    Column(modifier = Modifier.weight(3f)) {
+                        if (!readOnly) {
+                            dateTimeItem(
+                                dateState = dateStateStart,
+                                dateItem = item.timeStart.toDate().toLocaleString(),
+                                item = item,
+                                onDateTimeConfirm = onDateTimeConfirm,
+                                isStart = true
+                            )
+                            dateTimeItem(
+                                dateState = dateStateEnd,
+                                dateItem = item.timeEnd.toDate().toLocaleString(),
+                                item = item,
+                                onDateTimeConfirm = onDateTimeConfirm,
+                                isStart = false
+                            )
+                        }
+                    }
+                    if (linkItem) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            IconButton(onClick = {
+                            }
+                            ) {
+                                Icon(
+                                    imageVector = ImageVector.vectorResource(id = R.drawable.add),
+                                    contentDescription = stringResource(R.string.add),
+                                    modifier = Modifier.padding(5.dp)
+                                )
+                            }
+                        }
+                    }
+
+                }
+
 
             }
         }
@@ -343,6 +406,58 @@ fun dateTimeItem(
                 text = dateItem,
                 modifier = Modifier.padding(5.dp)
             )
+        }
+    }
+}
+
+@Composable
+fun titleChangeDialog(
+    onConfirmation: (String) -> Unit,
+    onDismissRequest: () -> Unit
+) {
+    var text by remember { mutableStateOf("") }
+    Dialog(onDismissRequest = onDismissRequest) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                TextField(
+                    value = text,
+                    onValueChange = { text = it }
+                )
+                Text(
+                    text = "Введите название",
+                    modifier = Modifier.padding(16.dp),
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    TextButton(
+                        onClick = { onDismissRequest() },
+                        modifier = Modifier.padding(8.dp),
+                    ) {
+                        Text("Отмена")
+                    }
+                    TextButton(
+                        onClick = { onConfirmation(text) },
+                        modifier = Modifier.padding(8.dp),
+                    ) {
+                        Text("Подтвердить")
+                    }
+                }
+            }
+
         }
     }
 }

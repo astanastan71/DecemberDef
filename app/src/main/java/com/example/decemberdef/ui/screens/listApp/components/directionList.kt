@@ -64,7 +64,6 @@ import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
 fun directionsList(
     onDirectionClick: (Direction) -> Unit,
     viewModel: DirectionListViewModel,
-    mainNavControllerDestinationId: Int?,
     isDoneClick: (Boolean, String) -> Unit,
     navController: NavHostController,
     onDescriptionClick: (RichTextState, String) -> Unit,

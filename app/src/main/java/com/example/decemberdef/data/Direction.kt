@@ -5,7 +5,7 @@ data class Direction(
     val description: String = "",
     val imgURL: String = "",
     var isDone: Boolean = false,
-    val uid: String = "no id",
+    var uid: String = "no id",
     val progress: Int = 0,
     val count: Int = 0,
     val shared: Boolean = false

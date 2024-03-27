@@ -52,6 +52,13 @@ class MainScreenViewModel(
         getCollectionsData()
     }
 
+    fun addOtherUserDirection(parameter: String, tasks: List<Task>){
+        val parts = parameter.split("AndAlso")
+        viewModelScope.launch {
+            mainRepository.addOtherUserDirection(parts[1],parts[0], tasks)
+        }
+    }
+
     private fun getCollectionsData() {
         viewModelScope.launch {
             collectionsListGetState = try {
@@ -65,6 +72,21 @@ class MainScreenViewModel(
                 CollectionsListGetState.Error
             }
         }
+    }
+
+    fun getTasksDataFromLink(parameter: String) {
+        val parts = parameter.split("AndAlso")
+        viewModelScope.launch {
+            tasksListGetState = try {
+                TasksListGetState.Success(mainRepository.getTasksListFromLink(parts[1],parts[0]))
+            }
+            catch (e:Exception){
+                TasksListGetState.Error
+            }
+        }
+
+
+
     }
 
     fun getTasksData(directions: List<Direction>) {

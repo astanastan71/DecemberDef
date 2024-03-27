@@ -48,7 +48,7 @@ class DirectionListViewModel(
     init {
     }
 
-    fun getUser():String?{
+    fun getUser(): String? {
         val user = mainRepository.getUser()
         return user?.uid
     }
@@ -68,21 +68,40 @@ class DirectionListViewModel(
 
     }
 
-    fun updateCurrentLink(link: String){
+    fun updateCurrentLink(link: String) {
         _uiState.update { currentState ->
             currentState.copy(
                 currentLink = link
             )
         }
+    }
 
+    fun deleteTask(direction: Direction, task: Task){
+        viewModelScope.launch {
+            mainRepository.deleteTask(direction, task)
+        }
+    }
+
+    fun setTaskTitle(
+        title: String,
+        taskId: String,
+        directionId: String
+    ) {
+        viewModelScope.launch {
+            mainRepository.setTaskTitle(
+                directionId,
+                taskId,
+                title
+            )
+        }
 
     }
 
     fun setTaskDescription(
-        text:RichTextState,
+        text: RichTextState,
         directionId: String,
         taskId: String
-    ){
+    ) {
         viewModelScope.launch {
             mainRepository.setTaskDescription(text, directionId, taskId)
         }

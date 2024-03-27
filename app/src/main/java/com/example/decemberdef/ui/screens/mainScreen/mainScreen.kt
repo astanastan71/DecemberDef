@@ -6,8 +6,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -16,27 +14,30 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.decemberdef.ui.navigation.BottomNav.BottomNavItem
-import com.example.decemberdef.ui.navigation.HomeRoute
+import com.example.decemberdef.ui.navigation.Route
 import com.example.decemberdef.ui.navigation.navigationBar
 import com.example.decemberdef.ui.screens.calendarScreen.calendarApp
 import com.example.decemberdef.ui.screens.homeScreen.HomeApp
+import com.example.decemberdef.ui.screens.linkScreen.linkApp
 import com.example.decemberdef.ui.screens.listApp.directionListApp
 import com.example.decemberdef.ui.screens.mainScreen.components.topAppBarMainScreen
 
 @Composable
 fun mainScreen(
+    parameter: String? = null,
     mainScreenViewModel: MainScreenViewModel = viewModel(factory = MainScreenViewModel.Factory)
 ) {
     val navController = rememberNavController()
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    val lastOpenedDestination = remember { mutableStateOf(HomeRoute.DirectionScreen.name) }
-
-    var currentDestinationId: Int? = null
-    navController.addOnDestinationChangedListener { _, destination, _ ->
-        currentDestinationId = destination.id
+    val startDestinationId = if (parameter != null) {
+        Route.LinkScreen.route
+    } else {
+        BottomNavItem.Home.route
     }
+
+
     Scaffold(
         topBar = {
             topAppBarMainScreen(onLogOutClick = {
@@ -48,13 +49,45 @@ fun mainScreen(
         }) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = BottomNavItem.Home.route,
-            modifier = Modifier.padding(paddingValues).pointerInput(Unit){
-                detectTapGestures(onTap = {
-                    keyboardController?.hide()
-                })
-            }
+            startDestination = startDestinationId,
+            modifier = Modifier
+                .padding(paddingValues)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = {
+                        keyboardController?.hide()
+                    })
+                }
         ) {
+            composable(route = Route.LinkScreen.route) {
+                if (parameter != null) {
+                    mainScreenViewModel.getTasksDataFromLink(parameter)
+                }
+                when (val tasksListGetState = mainScreenViewModel.tasksListGetState) {
+                    is TasksListGetState.Success -> {
+                        val tasks =
+                            tasksListGetState.tasks
+                        linkApp(
+                            taskList = tasks,
+                            parameter = parameter,
+                            addOtherUserDirection = {
+                                if (parameter != null) {
+                                    mainScreenViewModel.addOtherUserDirection(parameter, tasks)
+                                }
+                            }
+                        )
+                    }
+
+                    is TasksListGetState.Loading -> {
+                        Text("Loading")
+                    }
+
+                    is TasksListGetState.Error -> {
+                        Text("ERROR")
+
+                    }
+                }
+
+            }
             composable(route = BottomNavItem.Home.route) {
                 HomeApp(
                     modifier = Modifier
@@ -91,16 +124,7 @@ fun mainScreen(
             }
             composable(route = BottomNavItem.DirectionChooser.route) {
                 directionListApp(
-                    mainNavControllerDestinationId = currentDestinationId,
                     directionListState = mainScreenViewModel.collectionsListGetState,
-                    lastOpenedDestination = lastOpenedDestination.value,
-                    onDestinationChange = { destination, _ ->
-//                        if (destination.route.toString()!= HomeRoute.DirectionScreen.name)
-//                            lastOpenedDestination.value = HomeRoute.TaskScreen.name + "/${directionUid}"
-//                        else
-                        lastOpenedDestination.value = destination.route.toString()
-
-                    },
                     padding = paddingValues
                 )
             }

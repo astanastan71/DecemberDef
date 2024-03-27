@@ -5,7 +5,7 @@ import java.util.Date
 
 data class Task(
     val title: String = "",
-    val uid: String = "no id",
+    var uid: String = "no id",
     val description: String = "",
     val completed: Boolean = false,
     val imgUrl: String = "",

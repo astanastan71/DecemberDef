@@ -23,4 +23,6 @@
     <string name="add">Добавить</string>
     <string name="edit">Изменить</string>
     <string name="is_done">Выполнено ли?</string>
+    <string name="titleChangeField">Название\n</string>
+    <string name="delete">Удалить</string>
 </resources>

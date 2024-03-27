@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.decemberdef.ui.screens.authScreen.AuthScreen
@@ -32,6 +34,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
     private val RC_SIGN_IN = 9001
 
+    private val _parameter: MutableState<String?> =
+        mutableStateOf(value = null)
 
     private fun googleSignIn(
     ) {
@@ -85,7 +89,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AuthScreen()
+                    AuthScreen(parameter = _parameter.value)
                 }
             }
         }
@@ -95,10 +99,11 @@ class MainActivity : ComponentActivity() {
         Firebase.dynamicLinks
             .getDynamicLink(intent)
             .addOnSuccessListener(this) { pendingDynamicLinkData: PendingDynamicLinkData? ->
-                var deepLink: Uri? = null
+                var deepLink: Uri?
                 val parameter: String =
                     pendingDynamicLinkData?.link?.getQueryParameter("PARAMETER").orEmpty()
                 if (pendingDynamicLinkData != null) {
+                    _parameter.value = parameter
                     deepLink = pendingDynamicLinkData.link
                     Log.d(TAG, "Here's the link $deepLink, and parameter $parameter")
                     Toast.makeText(this, parameter, Toast.LENGTH_LONG).show()

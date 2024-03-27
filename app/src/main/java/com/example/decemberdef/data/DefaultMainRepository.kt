@@ -97,7 +97,7 @@ class DefaultMainRepository(
                     )
                     .addOnCompleteListener {
                         customCollectionPath.document(direction.uid).update(
-                            "count", direction.count+1
+                            "count", direction.count + 1
                         ).addOnSuccessListener {
                             Log.d(
                                 TAG,
@@ -209,6 +209,15 @@ class DefaultMainRepository(
         } else {
             null
         }
+    }
+
+    override suspend fun getTasksListFromLink(userID: String, directionId: String): List<Task> {
+        return db.collection("users")
+            .document(userID)
+            .collection("directions")
+            .document(directionId)
+            .collection("tasks")
+            .get().await().toObjects(Task::class.java)
     }
 
 
@@ -409,6 +418,28 @@ class DefaultMainRepository(
 
     }
 
+    override suspend fun setTaskTitle(directionId: String, taskId: String, text: String) {
+        if (user != null) {
+            val customCollectionPath = db.collection("users")
+                .document(user.uid)
+                .collection("directions")
+                .document(directionId)
+            customCollectionPath
+                .collection("tasks")
+                .document(taskId)
+                .update(
+                    "title", text
+                )
+                .addOnSuccessListener {
+                    Log.d(
+                        TAG,
+                        "DocumentSnapshot successfully updated!"
+                    )
+                }
+                .addOnFailureListener { e -> Log.w(TAG, "Error updating document", e) }
+        }
+    }
+
     override suspend fun setTaskCompletionStatus(
         status: Boolean,
         uID: String,
@@ -455,6 +486,60 @@ class DefaultMainRepository(
 
     }
 
+    override suspend fun addOtherUserDirection(
+        userID: String,
+        directionId: String,
+        tasks: List<Task>
+    ) {
+        if (user != null) {
+            val sourceCollectionPath = db.collection("users")
+                .document(userID)
+                .collection("directions")
+
+            val collectionPath = db.collection("users")
+                .document(user.uid)
+                .collection("directions")
+
+            val newDirectionId = collectionPath.document().id
+
+            var direction = sourceCollectionPath.document(directionId)
+                .get().await().toObject(Direction::class.java)
+
+            if (direction != null) {
+                direction.uid = newDirectionId
+
+                collectionPath.document(newDirectionId).set(direction).addOnSuccessListener {
+                    Log.d(TAG, "OtherUser collection added!")
+                    tasks.forEachIndexed { index, task ->
+                        val newTaskId = collectionPath.document(newDirectionId)
+                            .collection("tasks")
+                            .document().id
+
+                        task.uid = newTaskId
+
+                        val document = collectionPath
+                            .document(newDirectionId)
+                            .collection("tasks")
+                            .document(newTaskId)
+                        try {
+                            document.set(task)
+                        } catch (e: Exception) {
+                            Log.w(TAG, "error adding tasks $index", e)
+                        }
+                    }
+                }
+                    .addOnFailureListener {
+                        Log.w(TAG, "OtherUser collection add failed", it)
+                    }
+                    .await()
+            }
+        } else {
+            null
+        }
+
+
+    }
+
 //        val userCollection: MutableList<Task> = mutableListOf()
 //        try {
 //            val collectionSnapshot = getTasksFromFirestore(directionId)
@@ -497,6 +582,95 @@ class DefaultMainRepository(
     override fun getUser(): FirebaseUser? {
         return user
     }
+
+    override suspend fun deleteTask(direction: Direction, task: Task) {
+        if (user != null) {
+            val customCollectionPath = db.collection("users")
+                .document(user.uid)
+                .collection("directions")
+                .document(direction.uid)
+            customCollectionPath
+                .collection("tasks")
+                .document(task.uid)
+                .delete()
+                .addOnSuccessListener {
+                    Log.d(TAG, "Document successfully deleted")
+                    customCollectionPath.update(
+                        "count", direction.count - 1
+                    )
+                        .addOnSuccessListener {
+                            Log.d(
+                                TAG,
+                                "Direction count successfully updated!"
+                            )
+                        }
+                        .addOnFailureListener { e ->
+                            Log.w(
+                                TAG,
+                                "Error updating direction count",
+                                e
+                            )
+                        }
+                    if (task.completed) {
+                        customCollectionPath.update(
+                            "progress", direction.progress - 1
+                        ).addOnSuccessListener {
+                            Log.d(
+                                TAG,
+                                "Direction progress successfully updated!"
+                            )
+                        }
+                            .addOnFailureListener { e ->
+                                Log.w(
+                                    TAG,
+                                    "Error updating direction progress",
+                                    e
+                                )
+                            }
+                    }
+                }
+                .addOnFailureListener {
+                    Log.e(TAG, "Error deleting document", it)
+                }
+        }
+    }
+
+    override suspend fun deleteDirection(directionId: String) {
+        if (user != null) {
+            val customCollectionPath = db.collection("users")
+                .document(user.uid)
+                .collection("directions")
+
+            val tasksSnapshot = customCollectionPath.document(directionId)
+                .collection("tasks")
+                .get().await()
+
+            for (task in tasksSnapshot) {
+                val taskId = task.id
+                val taskReference = customCollectionPath.document(directionId)
+                    .collection("tasks")
+                    .document(taskId)
+                taskReference.delete().addOnSuccessListener {
+                    Log.d(TAG, "Document successfully deleted")
+                }
+                    .addOnFailureListener {
+                        Log.e(TAG, "Error deleting document", it)
+                    }
+                    .await()
+            }
+
+            customCollectionPath.document(directionId)
+                .delete()
+                .addOnSuccessListener {
+                    Log.d(TAG, "Document successfully deleted")
+                }
+                .addOnFailureListener {
+                    Log.e(TAG, "Error deleting document", it)
+                }
+                .await()
+        }
+    }
+
 
     override suspend fun getCurrentDirection(directionId: String): Flow<Direction>? {
         return if (user != null) {
