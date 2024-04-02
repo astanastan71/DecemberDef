@@ -40,6 +40,8 @@ interface MainRepository {
     suspend fun setDirectionDescription(text: RichTextState, directionId: String)
     suspend fun setTaskDescription(text: RichTextState, directionId: String, taskId: String)
     suspend fun setTaskTitle(directionId: String, taskId: String, text: String)
+    suspend fun setDirectionTitle(directionId: String, text: String)
     suspend fun collectTaskData(directions: List<Direction>): List<Task>
     suspend fun getOtherUserDirection(userID: String): Flow<List<Direction>>?
+    suspend fun setDirectionShareMode(share: Boolean, directionId: String)
 }

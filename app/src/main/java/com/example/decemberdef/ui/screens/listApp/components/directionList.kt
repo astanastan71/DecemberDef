@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,10 +16,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AlignHorizontalCenter
+import androidx.compose.material.icons.filled.AlignHorizontalLeft
+import androidx.compose.material.icons.filled.AlignHorizontalRight
+import androidx.compose.material.icons.filled.FormatBold
+import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -30,24 +40,30 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusEvent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.decemberdef.R
 import com.example.decemberdef.data.Direction
@@ -59,27 +75,33 @@ import com.google.firebase.dynamiclinks.shortLinkAsync
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
+import kotlinx.coroutines.launch
 
 @Composable
 fun directionsList(
     onDirectionClick: (Direction) -> Unit,
     viewModel: DirectionListViewModel,
-    isDoneClick: (Boolean, String) -> Unit,
-    navController: NavHostController,
+    setSharedStatus: (Boolean, String) -> Unit,
     onDescriptionClick: (RichTextState, String) -> Unit,
     directions: List<Direction>,
+    onTitleChange: (String, String) -> Unit,
+    onDirectionDelete: (String) -> Unit,
     link: String
 ) {
+    val listState = rememberLazyListState()
     var localDirections = directions
     var addList: MutableList<Direction> = mutableListOf()
+    val coroutineScope = rememberCoroutineScope()
     addList.add(
         Direction(
             title = stringResource(id = R.string.add),
             imgURL = "https://cdn-icons-png.flaticon.com/512/7666/7666164.png"
         )
     )
-    Column(modifier = Modifier) {
-        LazyColumn(contentPadding = PaddingValues(5.dp)) {
+    Column(
+        modifier = Modifier
+    ) {
+        LazyColumn(contentPadding = PaddingValues(5.dp), state = listState) {
             items(addList) {
                 addDirectionItem(
                     direction = it,
@@ -87,15 +109,20 @@ fun directionsList(
                     modifier = Modifier.padding(8.dp)
                 )
             }
-            items(localDirections.reversed()) {
+            itemsIndexed(localDirections.reversed()) { index, direction ->
                 directionItem(
-                    direction = it,
+                    direction = direction,
                     onDirectionClick = onDirectionClick,
-                    onDirectionStatusClick = isDoneClick,
                     onDirectionDescriptionClick = onDescriptionClick,
                     link = link,
                     viewModel = viewModel,
-                    modifier = Modifier.padding(8.dp)
+                    onTitleChange = onTitleChange,
+                    setSharedStatus = setSharedStatus,
+                    onDirectionDelete = onDirectionDelete,
+                    index = index,
+                    listState = listState,
+                    modifier = Modifier
+                        .padding(8.dp)
                 )
             }
         }
@@ -124,30 +151,61 @@ fun addDirectionItem(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun directionItem(
-    onDirectionStatusClick: (Boolean, String) -> Unit,
     direction: Direction,
     onDirectionClick: (Direction) -> Unit = {},
     onDirectionDescriptionClick: (RichTextState, String) -> Unit,
     link: String,
     viewModel: DirectionListViewModel,
+    onTitleChange: (String, String) -> Unit,
+    setSharedStatus: (Boolean, String) -> Unit,
+    onDirectionDelete: (String) -> Unit,
+    listState: LazyListState,
+    index: Int,
     modifier: Modifier
 ) {
+    var paragraphStyle by remember { mutableStateOf(ParagraphStyle(textAlign = TextAlign.Start)) }
+    var boldSelected by rememberSaveable { mutableStateOf(false) }
+    var underlinedSelected by rememberSaveable { mutableStateOf(false) }
+    var paragraphStyleIcon = Icons.Default.AlignHorizontalLeft
+
+
+    val coroutineScope = rememberCoroutineScope()
+    var text by remember { mutableStateOf(direction.title) }
+    val openDialog = remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
     val descriptionEditorState = rememberRichTextState()
     var expanded by remember { mutableStateOf(false) }
     var isDone by remember { mutableStateOf(direction.isDone) }
+    var shared by remember { mutableStateOf(direction.shared) }
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
 
-    descriptionEditorState
-        .toggleSpanStyle(
-            SpanStyle(
-                fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
-                fontWeight = FontWeight.Bold
-            )
+    descriptionEditorState.toggleParagraphStyle(
+        paragraphStyle
+    )
+    if (openDialog.value) {
+        titleChangeDialog(
+            onConfirmation = { text ->
+                onTitleChange(text, direction.uid)
+                openDialog.value = false
+            },
+            onDismissRequest = {
+                openDialog.value = false
+            },
+            text = text,
+            onValueChange = {
+                text = it
+            }
         )
+    }
     Card(
-        modifier = modifier
+        modifier = modifier.clickable {
+            onDirectionClick(direction)
+            Log.d(ContentValues.TAG, "directionItem usage")
+
+        }
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
             Column(
@@ -156,10 +214,7 @@ fun directionItem(
                     .fillMaxWidth()
                     .padding(4.dp)
                     .clickable {
-                        onDirectionClick(direction)
-                        Log.d(ContentValues.TAG, "directionItem usage")
                     }
-
             )
             {
                 AsyncImage(
@@ -178,8 +233,7 @@ fun directionItem(
                     .fillMaxWidth()
                     .padding(4.dp)
                     .clickable {
-                        onDirectionClick(direction)
-                        Log.d(ContentValues.TAG, "directionItem usage")
+                        openDialog.value = true
                     },
                 horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.Center
@@ -202,6 +256,16 @@ fun directionItem(
                         descriptionEditorState.setHtml(direction.description)
                     }
                     expanded = !expanded
+                    if (descriptionEditorState.toHtml() != direction.description) {
+                        onDirectionDescriptionClick(
+                            descriptionEditorState,
+                            direction.uid
+                        )
+                    }
+                    keyboardController?.hide()
+                    coroutineScope.launch {
+                        listState.scrollToItem(index)
+                    }
                 }) {
                     Icon(
                         imageVector = if (expanded)
@@ -217,31 +281,106 @@ fun directionItem(
         if (expanded) {
             Row(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.weight(3f)) {
-                    RichTextEditor(
-                        state = descriptionEditorState,
-                        enabled = true,
-                        readOnly = false,
-                        modifier = Modifier
-                            .padding(5.dp)
-                            .fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(
-                            capitalization = KeyboardCapitalization.Sentences,
-                            autoCorrect = false,
-                            keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Done
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                if (descriptionEditorState.toHtml() != direction.description) {
-                                    onDirectionDescriptionClick(
-                                        descriptionEditorState,
-                                        direction.uid
-                                    )
+                    Row(modifier = Modifier.fillMaxSize()) {
+                        IconButton(onClick = {
+                            when (paragraphStyle) {
+                                ParagraphStyle(textAlign = TextAlign.Start) -> {
+                                    paragraphStyle = ParagraphStyle(textAlign = TextAlign.Center)
+                                    paragraphStyleIcon = Icons.Default.AlignHorizontalCenter
                                 }
-                                keyboardController?.hide()
+
+                                ParagraphStyle(textAlign = TextAlign.Center) -> {
+                                    paragraphStyle = ParagraphStyle(textAlign = TextAlign.End)
+                                    paragraphStyleIcon = Icons.Default.AlignHorizontalRight
+                                }
+
+                                ParagraphStyle(textAlign = TextAlign.End) -> {
+                                    paragraphStyle = ParagraphStyle(textAlign = TextAlign.Start)
+                                    paragraphStyleIcon = Icons.Default.AlignHorizontalLeft
+                                }
                             }
+                        }
+                        ) {
+                            Icon(
+                                imageVector = {
+                                    when (paragraphStyle) {
+                                        ParagraphStyle(textAlign = TextAlign.Start) -> Icons.Default.AlignHorizontalCenter
+                                        ParagraphStyle(textAlign = TextAlign.Center) ->
+                                            Icons.Default.AlignHorizontalRight
+                                        ParagraphStyle(textAlign = TextAlign.End) ->
+                                            Icons.Default.AlignHorizontalLeft
+                                    }
+                                },
+                                contentDescription = stringResource(R.string.Bold),
+                                modifier = Modifier.padding(5.dp)
+                            )
+                        }
+                        IconButton(onClick = {
+                            descriptionEditorState.toggleSpanStyle(SpanStyle(
+                                fontWeight = FontWeight.Bold
+                            ))
+                            boldSelected = !boldSelected
+                        }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FormatBold,
+                                contentDescription = stringResource(R.string.Bold),
+                                tint = if (!boldSelected) {
+                                    Color.Gray
+                                } else {
+                                    Color.Black
+                                },
+                                modifier = Modifier.padding(5.dp)
+                            )
+                        }
+                        IconButton(onClick = {
+                            descriptionEditorState.toggleSpanStyle(SpanStyle(
+                                textDecoration = TextDecoration.Underline
+                            ))
+                            underlinedSelected = !underlinedSelected
+                        }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FormatUnderlined,
+                                contentDescription = stringResource(R.string.underlined),
+                                tint = if (!underlinedSelected) {
+                                    Color.Gray
+                                } else {
+                                    Color.Black
+                                },
+                                modifier = Modifier.padding(5.dp)
+                            )
+                        }
+
+                    }
+                    Row(modifier = Modifier.fillMaxSize()) {
+                        RichTextEditor(
+                            state = descriptionEditorState,
+                            enabled = true,
+                            readOnly = false,
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .fillMaxWidth()
+                                .onFocusEvent {
+                                    if (it.isFocused) {
+                                        coroutineScope.launch {
+                                            bringIntoViewRequester.bringIntoView()
+                                        }
+                                    }
+                                },
+                            keyboardOptions = KeyboardOptions(
+                                capitalization = KeyboardCapitalization.Sentences,
+                                autoCorrect = false,
+                                keyboardType = KeyboardType.Text,
+                                imeAction = ImeAction.Default
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                }
+                            )
                         )
-                    )
+                    }
+
                 }
                 Column(
                     modifier = Modifier
@@ -249,25 +388,6 @@ fun directionItem(
                         .padding(5.dp),
                     horizontalAlignment = Alignment.End
                 ) {
-                    // DIRECTION STATUS CHANGE
-//                    Row(
-//                        modifier = Modifier.fillMaxWidth(),
-//                        horizontalArrangement = Arrangement.Center
-//                    ) {
-//                        IconButton(onClick = {
-//                            isDone = !isDone
-//                            onDirectionStatusClick(isDone, direction.uid)
-//                        }) {
-//                            Icon(
-//                                imageVector = ImageVector.vectorResource(id = R.drawable.is_done),
-//                                contentDescription = stringResource(R.string.is_done),
-//                                tint = if (isDone)
-//                                    Color.Green
-//                                else
-//                                    Color.Red
-//                            )
-//                        }
-//                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
@@ -287,7 +407,42 @@ fun directionItem(
                             text = link,
                             context = LocalContext.current
                         )
-
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        IconButton(onClick = {
+                            shared = !shared
+                            setSharedStatus(shared, direction.uid)
+                        }
+                        ) {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(id = R.drawable.share_lock),
+                                contentDescription = stringResource(R.string.share_lock),
+                                tint = if (shared) {
+                                    Color.Gray
+                                } else {
+                                    Color.Black
+                                },
+                                modifier = Modifier.padding(5.dp)
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        IconButton(onClick = {
+                            onDirectionDelete(direction.uid)
+                        }
+                        ) {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(id = R.drawable.delete),
+                                contentDescription = stringResource(R.string.delete),
+                                modifier = Modifier.padding(5.dp)
+                            )
+                        }
 
                     }
 
@@ -329,7 +484,6 @@ fun Share(viewModel: DirectionListViewModel, direction: Direction, text: String,
         }
     }) {
         Icon(imageVector = Icons.Default.Share, contentDescription = null)
-        Text("Share", modifier = Modifier.padding(start = 8.dp))
     }
 }
 

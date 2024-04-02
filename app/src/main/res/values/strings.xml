@@ -25,4 +25,8 @@
     <string name="is_done">Выполнено ли?</string>
     <string name="titleChangeField">Название\n</string>
     <string name="delete">Удалить</string>
+    <string name="share_lock">Отменить обмен</string>
+    <string name="Bold">Жирный текст</string>
+    <string name="decoration">Декорация текста</string>
+    <string name="underlined">Линия снизу</string>
 </resources>

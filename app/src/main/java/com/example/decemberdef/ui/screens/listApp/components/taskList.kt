@@ -142,6 +142,7 @@ fun taskItem(
     deleteTask: (Task) -> Unit = { _ -> },
     modifier: Modifier = Modifier
 ) {
+    var text by remember { mutableStateOf(item.title) }
     val keyboardController = LocalSoftwareKeyboardController.current
     var expanded by remember { mutableStateOf(false) }
     val taskEditorState = rememberRichTextState()
@@ -166,7 +167,12 @@ fun taskItem(
             },
             onDismissRequest = {
                 openDialog.value = false
-            })
+            },
+            text = text,
+            onValueChange = {
+                text = it
+            }
+        )
     }
     Card(
         modifier = modifier
@@ -233,9 +239,12 @@ fun taskItem(
             }
         }
         if (expanded) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row() {
-                    Column(modifier = Modifier.weight(3f)) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = Modifier.weight(4f)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
                         RichTextEditor(
                             state = taskEditorState,
                             readOnly = readOnly,
@@ -252,10 +261,49 @@ fun taskItem(
                                     }
                                     keyboardController?.hide()
                                 }
-                            )
+                            ),
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
-                    Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        if (!readOnly) {
+                            dateTimeItem(
+                                dateState = dateStateStart,
+                                dateItem = item.timeStart.toDate().toLocaleString(),
+                                item = item,
+                                onDateTimeConfirm = onDateTimeConfirm,
+                                isStart = true
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        dateTimeItem(
+                            dateState = dateStateEnd,
+                            dateItem = item.timeEnd.toDate().toLocaleString(),
+                            item = item,
+                            onDateTimeConfirm = onDateTimeConfirm,
+                            isStart = false
+                        )
+
+                    }
+
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(5.dp),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
                         IconButton(onClick = {
                             if (readOnly) {
                             } else {
@@ -274,11 +322,11 @@ fun taskItem(
                                 modifier = Modifier.padding(5.dp)
                             )
                         }
-
                     }
-                }
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
                         IconButton(onClick = {
                             deleteTask(item)
                         }
@@ -290,31 +338,12 @@ fun taskItem(
                                 modifier = Modifier.padding(5.dp)
                             )
                         }
-
-                    }
-
-                }
-                Row() {
-                    Column(modifier = Modifier.weight(3f)) {
-                        if (!readOnly) {
-                            dateTimeItem(
-                                dateState = dateStateStart,
-                                dateItem = item.timeStart.toDate().toLocaleString(),
-                                item = item,
-                                onDateTimeConfirm = onDateTimeConfirm,
-                                isStart = true
-                            )
-                            dateTimeItem(
-                                dateState = dateStateEnd,
-                                dateItem = item.timeEnd.toDate().toLocaleString(),
-                                item = item,
-                                onDateTimeConfirm = onDateTimeConfirm,
-                                isStart = false
-                            )
-                        }
                     }
                     if (linkItem) {
-                        Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
                             IconButton(onClick = {
                             }
                             ) {
@@ -327,8 +356,8 @@ fun taskItem(
                         }
                     }
 
-                }
 
+                }
 
             }
         }
@@ -413,14 +442,15 @@ fun dateTimeItem(
 @Composable
 fun titleChangeDialog(
     onConfirmation: (String) -> Unit,
-    onDismissRequest: () -> Unit
+    onDismissRequest: () -> Unit,
+    text: String,
+    onValueChange: (String) -> Unit
 ) {
-    var text by remember { mutableStateOf("") }
     Dialog(onDismissRequest = onDismissRequest) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp)
+                .height(250.dp)
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
         ) {
@@ -432,7 +462,9 @@ fun titleChangeDialog(
             ) {
                 TextField(
                     value = text,
-                    onValueChange = { text = it }
+                    onValueChange = {
+                        onValueChange(it)
+                    }
                 )
                 Text(
                     text = "Введите название",

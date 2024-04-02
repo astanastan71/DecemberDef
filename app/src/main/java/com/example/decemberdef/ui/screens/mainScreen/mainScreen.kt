@@ -1,6 +1,7 @@
 package com.example.decemberdef.ui.screens.mainScreen
 
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -31,6 +32,8 @@ fun mainScreen(
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
+
+
     val startDestinationId = if (parameter != null) {
         Route.LinkScreen.route
     } else {
@@ -52,6 +55,7 @@ fun mainScreen(
             startDestination = startDestinationId,
             modifier = Modifier
                 .padding(paddingValues)
+                .imePadding()
                 .pointerInput(Unit) {
                     detectTapGestures(onTap = {
                         keyboardController?.hide()

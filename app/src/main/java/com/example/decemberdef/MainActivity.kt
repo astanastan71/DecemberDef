@@ -90,6 +90,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     AuthScreen(parameter = _parameter.value)
+//                    MainScreen()
                 }
             }
         }
@@ -109,7 +110,8 @@ class MainActivity : ComponentActivity() {
                     Toast.makeText(this, parameter, Toast.LENGTH_LONG).show()
                 } else {
                     Log.d(TAG, "Unfortunately, the link is null")
-                    Toast.makeText(this, "Unfortunately, the link is null", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "Unfortunately, the link is null", Toast.LENGTH_LONG)
+                        .show()
                 }
             }
             .addOnFailureListener(this) { e ->

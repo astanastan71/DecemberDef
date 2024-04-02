@@ -305,6 +305,27 @@ class DefaultMainRepository(
 
     }
 
+    override suspend fun setDirectionShareMode(share: Boolean, directionId: String) {
+        if (user != null) {
+            val customCollectionPath = db.collection("users")
+                .document(user.uid)
+                .collection("directions")
+                .document(directionId)
+
+            customCollectionPath
+                .update(
+                    "share", share
+                )
+                .addOnSuccessListener {
+                    Log.d(
+                        TAG,
+                        "Direction share status successfully updated!"
+                    )
+                }
+                .addOnFailureListener { e -> Log.w(TAG, "Error updating direction share status", e) }
+        }
+    }
+
     override suspend fun setTaskDateStart(
         taskId: String, directionId: String, time: Timestamp, isStart: Boolean
     ) {
@@ -437,6 +458,26 @@ class DefaultMainRepository(
                     )
                 }
                 .addOnFailureListener { e -> Log.w(TAG, "Error updating document", e) }
+        }
+    }
+
+    override suspend fun setDirectionTitle(directionId: String, text: String) {
+        if (user != null) {
+            val customCollectionPath = db.collection("users")
+                .document(user.uid)
+                .collection("directions")
+                .document(directionId)
+            customCollectionPath
+                .update(
+                    "title", text
+                )
+                .addOnSuccessListener {
+                    Log.d(
+                        TAG,
+                        "Direction title successfully updated!"
+                    )
+                }
+                .addOnFailureListener { e -> Log.w(TAG, "Error updating direction title", e) }
         }
     }
 

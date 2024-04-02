@@ -76,7 +76,7 @@ class DirectionListViewModel(
         }
     }
 
-    fun deleteTask(direction: Direction, task: Task){
+    fun deleteTask(direction: Direction, task: Task) {
         viewModelScope.launch {
             mainRepository.deleteTask(direction, task)
         }
@@ -94,7 +94,34 @@ class DirectionListViewModel(
                 title
             )
         }
+    }
 
+    fun setDirectionTitle(
+        title: String,
+        directionId: String
+    ) {
+        viewModelScope.launch {
+            mainRepository.setDirectionTitle(
+                directionId,
+                title
+            )
+        }
+    }
+
+    fun setDirectionSharedStatus(
+        shared: Boolean,
+        directionId: String
+    ) {
+        viewModelScope.launch {
+            mainRepository.setDirectionShareMode(shared, directionId)
+
+        }
+    }
+
+    fun deleteDirection(directionId: String){
+        viewModelScope.launch {
+            mainRepository.deleteDirection(directionId)
+        }
     }
 
     fun setTaskDescription(

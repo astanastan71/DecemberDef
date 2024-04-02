@@ -42,16 +42,21 @@ fun directionListApp(
                                 route = HomeRoute.TaskScreen.name + "/${it.uid}"
                             )
                         },
-                        navController = navController,
-                        isDoneClick = { isDone, uID ->
-                            viewModel.setDirectionStatus(isDone, uID)
-                        },
                         viewModel = viewModel,
                         onDescriptionClick = { text, uID ->
                             viewModel.setDirectionDescription(text, uID)
                         },
                         directions = directionListState.directions.collectAsState(listOf()).value,
-                        link = viewModel.uiState.collectAsState().value.currentLink
+                        link = viewModel.uiState.collectAsState().value.currentLink,
+                        onTitleChange = { title, directionId ->
+                            viewModel.setDirectionTitle(title, directionId)
+                        },
+                        setSharedStatus = { shared, directionId ->
+                            viewModel.setDirectionSharedStatus(shared, directionId)
+                        },
+                        onDirectionDelete = {
+                            viewModel.deleteDirection(it)
+                        }
                     )
 
                 is CollectionsListGetState.Loading -> {}
@@ -89,18 +94,18 @@ fun directionListApp(
                             initial =
                             listOf()
                         ).value,
-                        onTaskDescriptionClick = {text, taskUid ->
+                        onTaskDescriptionClick = { text, taskUid ->
                             if (uiState != null) {
                                 viewModel.setTaskDescription(text, uiState.value.uid, taskUid)
                             }
 
                         },
-                        onTitleChange = {title, taskId->
+                        onTitleChange = { title, taskId ->
                             if (uiState != null) {
                                 viewModel.setTaskTitle(title, taskId, uiState.value.uid)
                             }
                         },
-                        deleteTask = {task ->
+                        deleteTask = { task ->
                             if (uiState != null) {
                                 viewModel.deleteTask(uiState.value, task)
                             }
