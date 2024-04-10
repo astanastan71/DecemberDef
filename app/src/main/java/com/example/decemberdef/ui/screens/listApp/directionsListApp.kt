@@ -6,6 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,6 +24,7 @@ fun directionListApp(
     directionListState: CollectionsListGetState,
     viewModel: DirectionListViewModel = viewModel(factory = DirectionListViewModel.Factory)
 ) {
+    val context = LocalContext.current
     val navController = rememberNavController()
     val uiState =
         viewModel.uiState.collectAsState().value.currentDirection?.collectAsState(initial = Direction())
@@ -109,6 +111,19 @@ fun directionListApp(
                             if (uiState != null) {
                                 viewModel.deleteTask(uiState.value, task)
                             }
+                        },
+                        scheduleNotification = { time, title, description ->
+                            if (viewModel.checkNotificationPermissions()) {
+                                // Schedule a notification
+                                viewModel.scheduleNotification(
+                                    time,
+                                    title,
+                                    description,
+                                    context
+                                )
+                            }
+
+
                         }
                     )
 

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 interface MainRepository {
     suspend fun getUserData(): User
     fun signOut()
+    fun updateUser(firebaseUser: FirebaseUser?)
     suspend fun addCustomTaskAndDirection(text: RichTextState)
     suspend fun addCustomTask(direction: Direction)
     suspend fun addCustomDirection()

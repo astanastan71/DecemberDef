@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AlignHorizontalCenter
 import androidx.compose.material.icons.filled.AlignHorizontalLeft
 import androidx.compose.material.icons.filled.AlignHorizontalRight
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.FormatBold
 import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material.icons.filled.Share
@@ -302,13 +303,15 @@ fun directionItem(
                         }
                         ) {
                             Icon(
-                                imageVector = {
-                                    when (paragraphStyle) {
-                                        ParagraphStyle(textAlign = TextAlign.Start) -> Icons.Default.AlignHorizontalCenter
-                                        ParagraphStyle(textAlign = TextAlign.Center) ->
-                                            Icons.Default.AlignHorizontalRight
-                                        ParagraphStyle(textAlign = TextAlign.End) ->
-                                            Icons.Default.AlignHorizontalLeft
+                                imageVector =
+                                when (paragraphStyle) {
+                                    ParagraphStyle(textAlign = TextAlign.Start) -> Icons.Default.AlignHorizontalLeft
+                                    ParagraphStyle(textAlign = TextAlign.Center) ->
+                                        Icons.Default.AlignHorizontalCenter
+                                    ParagraphStyle(textAlign = TextAlign.End) ->
+                                        Icons.Default.AlignHorizontalRight
+                                    else -> {
+                                        Icons.Default.Face
                                     }
                                 },
                                 contentDescription = stringResource(R.string.Bold),
@@ -316,9 +319,11 @@ fun directionItem(
                             )
                         }
                         IconButton(onClick = {
-                            descriptionEditorState.toggleSpanStyle(SpanStyle(
-                                fontWeight = FontWeight.Bold
-                            ))
+                            descriptionEditorState.toggleSpanStyle(
+                                SpanStyle(
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
                             boldSelected = !boldSelected
                         }
                         ) {
@@ -334,9 +339,11 @@ fun directionItem(
                             )
                         }
                         IconButton(onClick = {
-                            descriptionEditorState.toggleSpanStyle(SpanStyle(
-                                textDecoration = TextDecoration.Underline
-                            ))
+                            descriptionEditorState.toggleSpanStyle(
+                                SpanStyle(
+                                    textDecoration = TextDecoration.Underline
+                                )
+                            )
                             underlinedSelected = !underlinedSelected
                         }
                         ) {

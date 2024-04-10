@@ -32,8 +32,6 @@ fun mainScreen(
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
-
-
     val startDestinationId = if (parameter != null) {
         Route.LinkScreen.route
     } else {
@@ -137,3 +135,4 @@ fun mainScreen(
 
     }
 }
+

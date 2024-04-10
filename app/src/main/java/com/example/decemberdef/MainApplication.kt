@@ -10,6 +10,7 @@ class MainApplication : Application() {
     lateinit var container: AppContainer
     override fun onCreate() {
         super.onCreate()
+        val appContext by lazy { applicationContext }
         container = DefaultAppContainer()
     }
 }

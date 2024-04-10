@@ -21,28 +21,34 @@ import kotlinx.coroutines.tasks.await
 class DefaultMainRepository(
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore,
-    private val user: FirebaseUser?,
+    private var user: FirebaseUser?,
 ) : MainRepository {
 
     override suspend fun getUserData(): User {
-        return if (user != null) {
+        val localUser = user
+        return if (localUser != null) {
             User(
-                userID = user.uid,
-                isEmailVerified = user.isEmailVerified,
-                isAnon = user.isAnonymous,
-                userName = user.displayName,
-                userEmail = user.email,
-                userPhoto = user.photoUrl
+                userID = localUser.uid,
+                isEmailVerified = localUser.isEmailVerified,
+                isAnon = localUser.isAnonymous,
+                userName = localUser.displayName,
+                userEmail = localUser.email,
+                userPhoto = localUser.photoUrl
             )
         } else User(
             userID = "Not Found"
         )
     }
 
+    override fun updateUser(firebaseUser: FirebaseUser?){
+        user = firebaseUser
+    }
+
     override suspend fun addCustomTaskAndDirection(textState: RichTextState) {
-        if (user != null) {
+        val localUser = user
+        if (localUser != null) {
             val customCollectionPath = db.collection("users")
-                .document(user.uid)
+                .document(localUser.uid)
                 .collection("directions")
 
             val customCollectionId = customCollectionPath.document().id
@@ -78,14 +84,18 @@ class DefaultMainRepository(
 
     override suspend fun addCustomTask(direction: Direction) {
         try {
-            if (user != null) {
+            val localUser = user
+            if (localUser != null) {
+                //Получаем путь к коллекции направлений
                 val customCollectionPath = db.collection("users")
-                    .document(user.uid)
+                    .document(localUser.uid)
                     .collection("directions")
+                //Инициализируем идентификатор задачи
                 val customCollectionId = customCollectionPath
                     .document(direction.uid)
                     .collection("tasks")
                     .document().id
+                //Определяем экземпляр класса задачи в коллекции
                 customCollectionPath
                     .document(direction.uid)
                     .collection("tasks")
@@ -122,10 +132,13 @@ class DefaultMainRepository(
 
     override suspend fun addCustomDirection() {
         try {
-            if (user != null) {
+            val localUser = user
+            if (localUser != null) {
+                //Путь к коллекции
                 val customCollectionPath = db.collection("users")
-                    .document(user.uid)
+                    .document(localUser.uid)
                     .collection("directions")
+                //Определяем идентификатор направления
                 val customCollectionId = customCollectionPath.document().id
                 customCollectionPath
                     .document(customCollectionId)
@@ -133,7 +146,7 @@ class DefaultMainRepository(
                         Direction(
                             uid = customCollectionId,
                             progress = 0
-                        )
+                        ) // назначаем идентификатор в качестве значения атрибута
                     )
                     .addOnCompleteListener {
                         Log.d(
@@ -153,9 +166,10 @@ class DefaultMainRepository(
     }
 
     private suspend fun getDirectionsFromFirestore(): QuerySnapshot? {
-        return if (user != null) {
+        val localUser = user
+        return if (localUser != null) {
             val collectionReference = db.collection("users")
-                .document(user.uid)
+                .document(localUser.uid)
                 .collection("directions")
             collectionReference.get().await()
         } else {
@@ -198,9 +212,10 @@ class DefaultMainRepository(
 
 
     override fun getDirectionsList(): Flow<List<Direction>>? {
-        return if (user != null) {
+        val localUser = user
+        return if (localUser != null) {
             db.collection("users")
-                .document(user.uid)
+                .document(localUser.uid)
                 .collection("directions")
                 .snapshotFlow()
                 .map { querySnapshot ->
@@ -223,11 +238,12 @@ class DefaultMainRepository(
 
     override suspend fun getDirectionTasks(directionId: String): TaskGetState {
         try {
-            return if (user != null) {
+            val localUser = user
+            return if (localUser != null) {
                 Log.d(TAG, "MESSAGE: User is not NULL")
                 TaskGetState.Success(
                     db.collection("users")
-                        .document(user.uid)
+                        .document(localUser.uid)
                         .collection("directions")
                         .document(directionId)
                         .collection("tasks")
@@ -248,10 +264,11 @@ class DefaultMainRepository(
 
     override suspend fun getDirectionTasksForAll(directionId: String): Flow<MutableList<Task>>? {
         try {
-            return if (user != null) {
+            val localUser = user
+            return if (localUser != null) {
                 Log.d(TAG, "MESSAGE: User is not NULL")
                 db.collection("users")
-                    .document(user.uid)
+                    .document(localUser.uid)
                     .collection("directions")
                     .document(directionId)
                     .collection("tasks")
@@ -271,12 +288,13 @@ class DefaultMainRepository(
 
     override suspend fun collectTaskData(directions: List<Direction>): List<Task> {
         val collectedTask: MutableList<Task> = mutableListOf()
-        return if (user != null) {
+        val localUser = user
+        return if (localUser != null) {
             for (direction in directions) {
                 Log.d(TAG, "MESSAGE: collection ${direction.uid}")
                 val singleDirectionTasks =
                     db.collection("users")
-                        .document(user.uid)
+                        .document(localUser.uid)
                         .collection("directions")
                         .document(direction.uid)
                         .collection("tasks")
@@ -291,7 +309,8 @@ class DefaultMainRepository(
     }
 
     override suspend fun getOtherUserDirection(userID: String): Flow<List<Direction>>? {
-        return if (user != null) {
+        val localUser = user
+        return if (localUser != null) {
             db.collection("users")
                 .document(userID)
                 .collection("directions")
@@ -306,9 +325,10 @@ class DefaultMainRepository(
     }
 
     override suspend fun setDirectionShareMode(share: Boolean, directionId: String) {
-        if (user != null) {
+        val localUser = user
+        if (localUser != null) {
             val customCollectionPath = db.collection("users")
-                .document(user.uid)
+                .document(localUser.uid)
                 .collection("directions")
                 .document(directionId)
 
@@ -329,10 +349,11 @@ class DefaultMainRepository(
     override suspend fun setTaskDateStart(
         taskId: String, directionId: String, time: Timestamp, isStart: Boolean
     ) {
-        if (user != null) {
+        val localUser = user
+        if (localUser != null) {
 
             val customCollectionPath = db.collection("users")
-                .document(user.uid)
+                .document(localUser.uid)
                 .collection("directions")
                 .document(directionId)
                 .collection("tasks")
@@ -369,9 +390,10 @@ class DefaultMainRepository(
     }
 
     override suspend fun setDirectionStatus(isDone: Boolean, directionId: String) {
-        if (user != null) {
+        val localUser = user
+        if (localUser != null) {
             val customCollectionPath = db.collection("users")
-                .document(user.uid)
+                .document(localUser.uid)
                 .collection("directions")
                 .document(directionId)
 
@@ -391,9 +413,10 @@ class DefaultMainRepository(
     }
 
     override suspend fun setDirectionDescription(text: RichTextState, directionId: String) {
-        if (user != null) {
+        val localUser = user
+        if (localUser != null) {
             val customCollectionPath = db.collection("users")
-                .document(user.uid)
+                .document(localUser.uid)
                 .collection("directions")
                 .document(directionId)
 
@@ -416,9 +439,10 @@ class DefaultMainRepository(
         directionId: String,
         taskId: String
     ) {
-        if (user != null) {
+        val localUser = user
+        if (localUser != null) {
             val customCollectionPath = db.collection("users")
-                .document(user.uid)
+                .document(localUser.uid)
                 .collection("directions")
                 .document(directionId)
                 .collection("tasks")
@@ -440,9 +464,10 @@ class DefaultMainRepository(
     }
 
     override suspend fun setTaskTitle(directionId: String, taskId: String, text: String) {
-        if (user != null) {
+        val localUser = user
+        if (localUser != null) {
             val customCollectionPath = db.collection("users")
-                .document(user.uid)
+                .document(localUser.uid)
                 .collection("directions")
                 .document(directionId)
             customCollectionPath
@@ -462,9 +487,10 @@ class DefaultMainRepository(
     }
 
     override suspend fun setDirectionTitle(directionId: String, text: String) {
-        if (user != null) {
+        val localUser = user
+        if (localUser != null) {
             val customCollectionPath = db.collection("users")
-                .document(user.uid)
+                .document(localUser.uid)
                 .collection("directions")
                 .document(directionId)
             customCollectionPath
@@ -487,9 +513,10 @@ class DefaultMainRepository(
         directionId: String,
         directionProgress: Int
     ) {
-        if (user != null) {
+        val localUser = user
+        if (localUser != null) {
             val customCollectionPath = db.collection("users")
-                .document(user.uid)
+                .document(localUser.uid)
                 .collection("directions")
                 .document(directionId)
 
@@ -532,13 +559,14 @@ class DefaultMainRepository(
         directionId: String,
         tasks: List<Task>
     ) {
-        if (user != null) {
+        val localUser = user
+        if (localUser != null) {
             val sourceCollectionPath = db.collection("users")
                 .document(userID)
                 .collection("directions")
 
             val collectionPath = db.collection("users")
-                .document(user.uid)
+                .document(localUser.uid)
                 .collection("directions")
 
             val newDirectionId = collectionPath.document().id
@@ -625,9 +653,10 @@ class DefaultMainRepository(
     }
 
     override suspend fun deleteTask(direction: Direction, task: Task) {
-        if (user != null) {
+        val localUser = user
+        if (localUser != null) {
             val customCollectionPath = db.collection("users")
-                .document(user.uid)
+                .document(localUser.uid)
                 .collection("directions")
                 .document(direction.uid)
             customCollectionPath
@@ -677,9 +706,10 @@ class DefaultMainRepository(
     }
 
     override suspend fun deleteDirection(directionId: String) {
-        if (user != null) {
+        val localUser = user
+        if (localUser != null) {
             val customCollectionPath = db.collection("users")
-                .document(user.uid)
+                .document(localUser.uid)
                 .collection("directions")
 
             val tasksSnapshot = customCollectionPath.document(directionId)
@@ -714,9 +744,10 @@ class DefaultMainRepository(
 
 
     override suspend fun getCurrentDirection(directionId: String): Flow<Direction>? {
-        return if (user != null) {
+        val localUser = user
+        return if (localUser != null) {
             return db.collection("users")
-                .document(user.uid)
+                .document(localUser.uid)
                 .collection("directions")
                 .document(directionId)
                 .snapshotFlow()

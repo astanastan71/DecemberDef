@@ -1,5 +1,12 @@
 package com.example.decemberdef.ui.screens.listApp
 
+import android.annotation.SuppressLint
+import android.app.AlarmManager
+import android.app.AlertDialog
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,9 +16,13 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.decemberdef.MainApplication
+import com.example.decemberdef.Notification
 import com.example.decemberdef.data.Direction
 import com.example.decemberdef.data.MainRepository
 import com.example.decemberdef.data.Task
+import com.example.decemberdef.messageExtra
+import com.example.decemberdef.notificationID
+import com.example.decemberdef.titleExtra
 import com.example.decemberdef.ui.screens.listApp.states.DirectionListUiState
 import com.google.firebase.Timestamp
 import com.mohamedrejeb.richeditor.model.RichTextState
@@ -36,7 +47,8 @@ sealed interface TaskGetState {
 //}
 
 class DirectionListViewModel(
-    private val mainRepository: MainRepository
+    private val mainRepository: MainRepository,
+    private val context: Context
 ) : ViewModel() {
 
     var taskGetState: TaskGetState by mutableStateOf(TaskGetState.Loading)
@@ -118,7 +130,7 @@ class DirectionListViewModel(
         }
     }
 
-    fun deleteDirection(directionId: String){
+    fun deleteDirection(directionId: String) {
         viewModelScope.launch {
             mainRepository.deleteDirection(directionId)
         }
@@ -197,13 +209,80 @@ class DirectionListViewModel(
         taskGetState = TaskGetState.Loading
     }
 
+    @SuppressLint("ScheduleExactAlarm")
+    fun scheduleNotification(time:Long, title: String, description: String, localContext: Context) {
+        // Create an intent for the Notification BroadcastReceiver
+        val intent = Intent(context.applicationContext, Notification::class.java)
+
+        // Add title and message as extras to the intent
+        intent.putExtra(titleExtra, title)
+        intent.putExtra(messageExtra, description)
+
+        // Create a PendingIntent for the broadcast
+        val pendingIntent = PendingIntent.getBroadcast(
+            context.applicationContext,
+            notificationID,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        // Get the AlarmManager service
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        // Get the selected time and schedule the notification
+        val time = time
+        alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            time,
+            pendingIntent
+        )
+
+        // Show an alert dialog with information
+        // about the scheduled notification
+        showAlert(time, title, description, localContext)
+    }
+
+    private fun showAlert(time: Long, title: String, message: String, localContext: Context) {
+        // Format the time for display
+
+        // Create and show an alert dialog with notification details
+        val dateFormat = android.text.format.DateFormat.getLongDateFormat(context)
+        val timeFormat = android.text.format.DateFormat.getTimeFormat(context)
+        AlertDialog.Builder(localContext)
+            .setTitle("Notification Scheduled")
+            .setMessage(
+                "Title: $title\nMessage: $message\nAt: ${dateFormat.format(time)} ${timeFormat.format(time)}"
+            )
+            .setPositiveButton("Okay") { _, _ -> }
+            .show()
+    }
+
+    fun checkNotificationPermissions(): Boolean {
+        // Check if notification permissions are granted
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val isEnabled = notificationManager.areNotificationsEnabled()
+        if (!isEnabled) {
+            // Open the app notification settings if notifications are not enabled
+//            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+//            intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+//            context.startActivity(intent)
+            return false
+        }
+        return true
+    }
+
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application =
                     (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MainApplication)
                 val mainRepository = application.container.mainRepository
-                DirectionListViewModel(mainRepository = mainRepository)
+                val appContext by lazy { application.applicationContext }
+                DirectionListViewModel(
+                    mainRepository = mainRepository,
+                    context = appContext
+                )
             }
         }
     }

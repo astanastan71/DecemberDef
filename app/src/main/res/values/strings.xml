@@ -29,4 +29,7 @@
     <string name="Bold">Жирный текст</string>
     <string name="decoration">Декорация текста</string>
     <string name="underlined">Линия снизу</string>
+    <string name="task_notification_channel">Уведомление задачи</string>
+    <string name="task_notification_channel_description">Средняя важность</string>
+    <string name="create_notification">Создать уведомление</string>
 </resources>

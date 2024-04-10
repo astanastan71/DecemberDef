@@ -1,8 +1,6 @@
 package com.example.decemberdef.data
 
-import com.example.decemberdef.ui.screens.listApp.TaskGetState
 import com.google.firebase.Firebase
-import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 
@@ -17,6 +15,12 @@ class DefaultAppContainer : AppContainer {
     private val db = Firebase.firestore
 
     private val user = Firebase.auth.currentUser
+
+    init {
+        auth.addAuthStateListener {
+            mainRepository.updateUser(it.currentUser)
+        }
+    }
 
 
 

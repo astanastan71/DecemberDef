@@ -1,5 +1,8 @@
 package com.example.decemberdef
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.ContentValues.TAG
 import android.content.Intent
 import android.net.Uri
@@ -89,11 +92,32 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    val intent = Intent(applicationContext, Notification::class.java)
+                    val pendingIntent = PendingIntent.getBroadcast(
+                        applicationContext,
+                        notificationID,
+                        intent,
+                        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                    )
                     AuthScreen(parameter = _parameter.value)
+                    createNotificationChannel()
 //                    MainScreen()
                 }
             }
         }
+    }
+
+    private fun createNotificationChannel() {
+        // Create the NotificationChannel.
+        val name = getString(R.string.task_notification_channel)
+        val descriptionText = getString(R.string.task_notification_channel_description)
+        val importance = NotificationManager.IMPORTANCE_HIGH
+        val mChannel = NotificationChannel("HighImportance", name, importance)
+        mChannel.description = descriptionText
+        // Register the channel with the system. You can't change the importance
+        // or other notification behaviors after this.
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(mChannel)
     }
 
     private fun extracted() {
@@ -107,11 +131,8 @@ class MainActivity : ComponentActivity() {
                     _parameter.value = parameter
                     deepLink = pendingDynamicLinkData.link
                     Log.d(TAG, "Here's the link $deepLink, and parameter $parameter")
-                    Toast.makeText(this, parameter, Toast.LENGTH_LONG).show()
                 } else {
                     Log.d(TAG, "Unfortunately, the link is null")
-                    Toast.makeText(this, "Unfortunately, the link is null", Toast.LENGTH_LONG)
-                        .show()
                 }
             }
             .addOnFailureListener(this) { e ->
@@ -120,7 +141,6 @@ class MainActivity : ComponentActivity() {
                     "getDynamicLink:onFailure",
                     e
                 )
-                Toast.makeText(this, "getDynamicLink:onFailure $e", Toast.LENGTH_LONG).show()
             }
     }
 

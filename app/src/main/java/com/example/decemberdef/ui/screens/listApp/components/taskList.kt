@@ -16,6 +16,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.NotificationAdd
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DatePicker
@@ -69,7 +71,8 @@ fun taskList(
     viewModel: DirectionListViewModel,
     tasks: List<Task>,
     deleteTask: (Task) -> Unit,
-    onTitleChange: (String, String) -> Unit
+    onTitleChange: (String, String) -> Unit,
+    scheduleNotification: (Long, String, String) -> Unit,
 ) {
     var addList: MutableList<Task> = mutableListOf()
     addList.add(
@@ -95,7 +98,8 @@ fun taskList(
                 onCompletionStatusClick = onCompletionStatusClick,
                 onTaskDescriptionClick = onTaskDescriptionClick,
                 onTitleChange = onTitleChange,
-                deleteTask = deleteTask
+                deleteTask = deleteTask,
+                scheduleNotification = scheduleNotification
             )
         }
     }
@@ -140,6 +144,7 @@ fun taskItem(
     linkItem: Boolean = false,
     onTitleChange: (String, String) -> Unit = { _, _ -> },
     deleteTask: (Task) -> Unit = { _ -> },
+    scheduleNotification: (Long, String, String) -> Unit = { _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
     var text by remember { mutableStateOf(item.title) }
@@ -339,6 +344,29 @@ fun taskItem(
                             )
                         }
                     }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        IconButton(onClick = {
+                            val milliseconds = if (item.timeStart != null) {
+                                item.timeStart.seconds * 1000 + item.timeStart.nanoseconds / 1000000
+                            } else {
+                                // Handle the case where the timestamp is null (if applicable)
+                                null
+                            }
+                            if (milliseconds != null) {
+                                scheduleNotification(milliseconds, item.title, item.description)
+                            }
+                        }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.NotificationAdd,
+                                contentDescription = stringResource(R.string.create_notification),
+                                modifier = Modifier.padding(5.dp)
+                            )
+                        }
+                    }
                     if (linkItem) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -493,3 +521,4 @@ fun titleChangeDialog(
         }
     }
 }
+

@@ -1,5 +1,6 @@
 package com.example.decemberdef.ui.screens.signInApp
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -22,8 +24,10 @@ fun SignInApp(
     modifier: Modifier = Modifier
 ) {
     val signInAppState = viewModel.uiState.collectAsState().value
+    val context = LocalContext.current as Activity
     when (viewModel.logInState) {
         is LogInState.Success -> {
+            context.recreate()
             viewModel.reset()
         }
 
