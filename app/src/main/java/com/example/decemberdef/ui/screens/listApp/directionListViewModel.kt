@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Date
+import java.util.Random
 
 sealed interface TaskGetState {
     data class Success(val tasks: Flow<List<Task>>) : TaskGetState
@@ -199,61 +200,115 @@ class DirectionListViewModel(
         }
     }
 
-    fun setDirectionStatus(isDone: Boolean, uID: String) {
-        viewModelScope.launch {
-            mainRepository.setDirectionStatus(isDone, uID)
-        }
-    }
+    private fun generateUniqueIntId(): Int {
+        val currentTimeMillis = System.currentTimeMillis()
+        val randomNumber = Random().nextInt(Int.MAX_VALUE) // Generate random int within int range
 
-    fun reset() {
-        taskGetState = TaskGetState.Loading
+        // Ensure both operands have the same type (long) before XOR
+        val combinedLong = currentTimeMillis.toLong() xor randomNumber.toLong()
+
+        // Take the least significant bits to get an int within the desired range
+        return (combinedLong and Int.MAX_VALUE.toLong()).toInt()
     }
 
     @SuppressLint("ScheduleExactAlarm")
-    fun scheduleNotification(time:Long, title: String, description: String, localContext: Context) {
-        // Create an intent for the Notification BroadcastReceiver
+    fun deleteNotification(
+        id: Int,
+        title: String,
+        description: String,
+        taskId: String,
+        collectionId: String,
+        active: Boolean,
+        localContext: Context,
+        start: Boolean
+    ) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
         val intent = Intent(context.applicationContext, Notification::class.java)
 
-        // Add title and message as extras to the intent
         intent.putExtra(titleExtra, title)
         intent.putExtra(messageExtra, description)
+        intent.putExtra(notificationID, id)
 
-        // Create a PendingIntent for the broadcast
         val pendingIntent = PendingIntent.getBroadcast(
-            context.applicationContext,
-            notificationID,
+            context,
+            id,
             intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
+        alarmManager.cancel(pendingIntent)
 
-        // Get the AlarmManager service
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        viewModelScope.launch {
+            mainRepository.cancelNotification(taskId, collectionId, start)
+            mainRepository.isStartNotificationActiveChange(taskId, collectionId, active)
+        }
 
-        // Get the selected time and schedule the notification
-        val time = time
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            time,
-            pendingIntent
-        )
+        AlertDialog.Builder(localContext)
+            .setTitle("Уведомление удалено")
+            .setMessage(
+                "Название: $title\nОписание: $description"
+            )
+            .setPositiveButton("Ok") { _, _ -> }
+            .show()
 
-        // Show an alert dialog with information
-        // about the scheduled notification
-        showAlert(time, title, description, localContext)
     }
 
-    private fun showAlert(time: Long, title: String, message: String, localContext: Context) {
-        // Format the time for display
+    @SuppressLint("ScheduleExactAlarm")
+    fun scheduleNotification(
+        time: Long,
+        title: String,
+        description: String,
+        localContext: Context,
+        taskId: String,
+        collectionId: String,
+        start: Boolean,
+        active: Boolean
+    ) {
+        val intent = Intent(context.applicationContext, Notification::class.java)
+        intent.action = "ALARM_ACTION"
 
-        // Create and show an alert dialog with notification details
+        val genId = generateUniqueIntId()
+
+        intent.putExtra(titleExtra, title)
+        intent.putExtra(messageExtra, description)
+        intent.putExtra(notificationID, genId)
+
+        viewModelScope.launch {
+            mainRepository.setNotificationId(taskId, collectionId, start, genId)
+            mainRepository.isStartNotificationActiveChange(taskId, collectionId, active)
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            context.applicationContext,
+            genId,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val time = time
+        alarmManager.set(AlarmManager.RTC_WAKEUP, time, pendingIntent)
+        showAlert("Уведомление назначено", time, title, description, localContext)
+    }
+
+    private fun showAlert(
+        alert: String,
+        time: Long,
+        title: String,
+        message: String,
+        localContext: Context
+    ) {
         val dateFormat = android.text.format.DateFormat.getLongDateFormat(context)
         val timeFormat = android.text.format.DateFormat.getTimeFormat(context)
         AlertDialog.Builder(localContext)
-            .setTitle("Notification Scheduled")
+            .setTitle(alert)
             .setMessage(
-                "Title: $title\nMessage: $message\nAt: ${dateFormat.format(time)} ${timeFormat.format(time)}"
+                "Название: $title\nОписание: $message\nВремя: ${dateFormat.format(time)} ${
+                    timeFormat.format(
+                        time
+                    )
+                }"
             )
-            .setPositiveButton("Okay") { _, _ -> }
+            .setPositiveButton("Ok") { _, _ -> }
             .show()
     }
 

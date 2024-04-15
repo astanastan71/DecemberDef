@@ -72,7 +72,8 @@ fun taskList(
     tasks: List<Task>,
     deleteTask: (Task) -> Unit,
     onTitleChange: (String, String) -> Unit,
-    scheduleNotification: (Long, String, String) -> Unit,
+    scheduleNotification: (Long, String, String, Boolean, String, Boolean) -> Unit = { _, _, _, _, _, _ -> },
+    cancelNotification: (Int, String, String, Boolean, String, Boolean) -> Unit = { _, _, _, _, _, _ -> },
 ) {
     var addList: MutableList<Task> = mutableListOf()
     addList.add(
@@ -99,7 +100,8 @@ fun taskList(
                 onTaskDescriptionClick = onTaskDescriptionClick,
                 onTitleChange = onTitleChange,
                 deleteTask = deleteTask,
-                scheduleNotification = scheduleNotification
+                scheduleNotification = scheduleNotification,
+                cancelNotification = cancelNotification
             )
         }
     }
@@ -144,7 +146,8 @@ fun taskItem(
     linkItem: Boolean = false,
     onTitleChange: (String, String) -> Unit = { _, _ -> },
     deleteTask: (Task) -> Unit = { _ -> },
-    scheduleNotification: (Long, String, String) -> Unit = { _, _, _ -> },
+    scheduleNotification: (Long, String, String, Boolean, String, Boolean) -> Unit = { _, _, _, _, _, _ -> },
+    cancelNotification: (Int, String, String, Boolean, String, Boolean) -> Unit = { _, _, _, _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
     var text by remember { mutableStateOf(item.title) }
@@ -155,6 +158,24 @@ fun taskItem(
     val dateStateEnd = rememberDatePickerState(initialDisplayMode = DisplayMode.Input)
     var isDone by remember { mutableStateOf(item.completed) }
     val openDialog = remember { mutableStateOf(false) }
+    var isStartNotificationActive by remember { mutableStateOf(item.startNotificationActive) }
+    val milliseconds = item.timeStart.seconds * 1000 + item.timeStart.nanoseconds / 1000000
+//    if (isStartNotificationActive){
+//        Log.d(TAG, "MilisecondsStart : $milliseconds")
+//        Log.d(TAG, "currentTime : ${System.currentTimeMillis()}")
+//        if (milliseconds<System.currentTimeMillis()){
+//            Log.d(TAG, "Miliseconds lower that current time")
+//            cancelNotification(
+//                item.notificationStartId,
+//                item.title,
+//                taskEditorState.toHtml(),
+//                true,
+//                item.uid,
+//                false
+//            )
+//        }
+//    }
+
 
     taskEditorState
         .toggleSpanStyle(
@@ -349,20 +370,35 @@ fun taskItem(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         IconButton(onClick = {
-                            val milliseconds = if (item.timeStart != null) {
-                                item.timeStart.seconds * 1000 + item.timeStart.nanoseconds / 1000000
+                            if (isStartNotificationActive) {
+                                cancelNotification(
+                                    item.notificationStartId,
+                                    item.title,
+                                    taskEditorState.toHtml(),
+                                    true,
+                                    item.uid,
+                                    false
+                                )
                             } else {
-                                // Handle the case where the timestamp is null (if applicable)
-                                null
+                                if (milliseconds != null) {
+                                    scheduleNotification(
+                                        milliseconds,
+                                        item.title,
+                                        taskEditorState.toHtml(),
+                                        true,
+                                        item.uid,
+                                        true
+                                    )
+                                }
                             }
-                            if (milliseconds != null) {
-                                scheduleNotification(milliseconds, item.title, item.description)
-                            }
+                            isStartNotificationActive = !isStartNotificationActive
                         }
                         ) {
                             Icon(
                                 imageVector = Icons.Default.NotificationAdd,
                                 contentDescription = stringResource(R.string.create_notification),
+                                tint = if (isStartNotificationActive) Color.Black
+                                else Color.Gray,
                                 modifier = Modifier.padding(5.dp)
                             )
                         }

@@ -10,5 +10,9 @@ data class Task(
     val completed: Boolean = false,
     val imgUrl: String = "",
     val timeStart: Timestamp = Timestamp.now(),
-    val timeEnd: Timestamp = Timestamp(Date(4076312924000))
+    val timeEnd: Timestamp = Timestamp(Date(4076312924000)),
+    val notificationStartId: Int = 0,
+    val notificationEndId: Int = 0,
+    val startNotificationActive: Boolean = false,
+    val endNotificationActive: Boolean = false,
 )

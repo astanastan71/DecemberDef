@@ -2,7 +2,6 @@ package com.example.decemberdef
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.ContentValues.TAG
 import android.content.Intent
 import android.net.Uri
@@ -92,13 +91,6 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val intent = Intent(applicationContext, Notification::class.java)
-                    val pendingIntent = PendingIntent.getBroadcast(
-                        applicationContext,
-                        notificationID,
-                        intent,
-                        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-                    )
                     AuthScreen(parameter = _parameter.value)
                     createNotificationChannel()
 //                    MainScreen()
@@ -108,7 +100,6 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun createNotificationChannel() {
-        // Create the NotificationChannel.
         val name = getString(R.string.task_notification_channel)
         val descriptionText = getString(R.string.task_notification_channel_description)
         val importance = NotificationManager.IMPORTANCE_HIGH

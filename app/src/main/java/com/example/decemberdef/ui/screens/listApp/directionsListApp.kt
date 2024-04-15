@@ -65,6 +65,7 @@ fun directionListApp(
                 is CollectionsListGetState.Error -> {
                     Text(text = "ERROR")
                 }
+
             }
         }
         composable(route = HomeRoute.TaskScreen.name + "/{direction_uid}") {
@@ -112,17 +113,35 @@ fun directionListApp(
                                 viewModel.deleteTask(uiState.value, task)
                             }
                         },
-                        scheduleNotification = { time, title, description ->
+                        scheduleNotification = { time, title, description, start, id, active ->
                             if (viewModel.checkNotificationPermissions()) {
-                                // Schedule a notification
-                                viewModel.scheduleNotification(
-                                    time,
+                                if (uiState != null) {
+                                    viewModel.scheduleNotification(
+                                        time,
+                                        title,
+                                        description,
+                                        context,
+                                        id,
+                                        uiState.value.uid,
+                                        start,
+                                        active
+                                    )
+                                }
+                            }
+                        },
+                        cancelNotification = { notificationId, title, description, start, id, active ->
+                            if (uiState != null) {
+                                viewModel.deleteNotification(
+                                    notificationId,
                                     title,
                                     description,
-                                    context
+                                    id,
+                                    uiState.value.uid,
+                                    active,
+                                    context,
+                                    start
                                 )
                             }
-
 
                         }
                     )

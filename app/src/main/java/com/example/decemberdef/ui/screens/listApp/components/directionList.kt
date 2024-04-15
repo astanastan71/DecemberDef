@@ -493,18 +493,3 @@ fun Share(viewModel: DirectionListViewModel, direction: Direction, text: String,
         Icon(imageVector = Icons.Default.Share, contentDescription = null)
     }
 }
-
-val directions = listOf(
-    Direction(
-        "Математика",
-        "Все что связано с ней",
-        "https://th.bing.com/th/id/R.f6654d239f25b7148e37d042ce090755?rik=r%2bVlXx39tzmKFQ&riu=http%3a%2f%2fpluspng.com%2fimg-png%2fmaths-hd-png-open-2000.png&ehk=H816RouyHSLR0HPFpeQ%2bpAAGfo8Xnhxql24CZ7NwW3w%3d&risl=&pid=ImgRaw&r=0",
-        false
-    ),
-    Direction(
-        "Физика",
-        "asasdasfdsfdshkjfhsdjfhdskjfhjdshfkdsfjkds",
-        "https://th.bing.com/th/id/R.f6654d239f25b7148e37d042ce090755?rik=r%2bVlXx39tzmKFQ&riu=http%3a%2f%2fpluspng.com%2fimg-png%2fmaths-hd-png-open-2000.png&ehk=H816RouyHSLR0HPFpeQ%2bpAAGfo8Xnhxql24CZ7NwW3w%3d&risl=&pid=ImgRaw&r=0",
-        true
-    )
-)

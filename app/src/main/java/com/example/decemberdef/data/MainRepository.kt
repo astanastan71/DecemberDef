@@ -23,6 +23,9 @@ interface MainRepository {
     suspend fun anonSignInCheck(): LogInState
     suspend fun getDirectionTasks(directionId: String): TaskGetState
     suspend fun getDirectionTasksForAll(directionId: String): Flow<MutableList<Task>>?
+    suspend fun setNotificationId(taskId: String, directionId: String, start: Boolean, id: Int)
+    suspend fun cancelNotification(taskId: String, directionId: String, start: Boolean)
+    suspend fun isStartNotificationActiveChange(taskId: String, directionId: String, active: Boolean)
     suspend fun setTaskDateStart(
         taskId: String,
         directionId: String,

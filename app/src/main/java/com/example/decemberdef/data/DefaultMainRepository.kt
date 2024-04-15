@@ -40,7 +40,7 @@ class DefaultMainRepository(
         )
     }
 
-    override fun updateUser(firebaseUser: FirebaseUser?){
+    override fun updateUser(firebaseUser: FirebaseUser?) {
         user = firebaseUser
     }
 
@@ -286,6 +286,123 @@ class DefaultMainRepository(
         }
     }
 
+    override suspend fun setNotificationId(
+        taskId: String, directionId: String, start: Boolean, id: Int
+    ) {
+        val localUser = user
+        if (localUser != null) {
+
+            val customCollectionPath = db.collection("users")
+                .document(localUser.uid)
+                .collection("directions")
+                .document(directionId)
+                .collection("tasks")
+                .document(taskId)
+
+            if (start) {
+                customCollectionPath
+                    .update(
+                        "notificationStartId", id
+                    )
+                    .addOnSuccessListener {
+                        Log.d(
+                            TAG,
+                            "notificationStartId successfully updated! $id"
+                        )
+                    }
+                    .addOnFailureListener { e -> Log.w(TAG, "Error updating document", e) }
+            } else {
+                customCollectionPath
+                    .update(
+                        "notificationEndId", id
+                    )
+                    .addOnSuccessListener {
+                        Log.d(
+                            TAG,
+                            "notificationEndId successfully updated! $id"
+                        )
+                    }
+                    .addOnFailureListener { e -> Log.w(TAG, "Error updating document", e) }
+            }
+
+
+        }
+    }
+
+    override suspend fun cancelNotification(
+        taskId: String,
+        directionId: String,
+        start: Boolean
+    ) {
+        val localUser = user
+        if (localUser != null) {
+            val customCollectionPath = db.collection("users")
+                .document(localUser.uid)
+                .collection("directions")
+                .document(directionId)
+                .collection("tasks")
+                .document(taskId)
+
+            if (start){
+                customCollectionPath
+                    .update(
+                        "notificationStartId", 0
+                    )
+                    .addOnSuccessListener {
+                        Log.d(
+                            TAG,
+                            "notificationStartId successfully updated!"
+                        )
+                    }
+                    .addOnFailureListener { e -> Log.w(TAG, "Error updating document", e) }
+            }
+            else {customCollectionPath
+                .update(
+                    "notificationEndId", 0
+                )
+                .addOnSuccessListener {
+                    Log.d(
+                        TAG,
+                        "notificationEndId successfully updated!"
+                    )
+                }
+                .addOnFailureListener { e -> Log.w(TAG, "Error updating document", e) }
+
+            }
+
+
+        }
+    }
+
+    override suspend fun isStartNotificationActiveChange(
+        taskId: String,
+        directionId: String,
+        active: Boolean
+    ) {
+        val localUser = user
+        if (localUser != null) {
+
+            val customCollectionPath = db.collection("users")
+                .document(localUser.uid)
+                .collection("directions")
+                .document(directionId)
+                .collection("tasks")
+                .document(taskId)
+
+            customCollectionPath
+                .update(
+                    "startNotificationActive", active
+                )
+                .addOnSuccessListener {
+                    Log.d(
+                        TAG,
+                        "StartNotificationActive successfully updated!"
+                    )
+                }
+                .addOnFailureListener { e -> Log.w(TAG, "Error updating document", e) }
+        }
+    }
+
     override suspend fun collectTaskData(directions: List<Direction>): List<Task> {
         val collectedTask: MutableList<Task> = mutableListOf()
         val localUser = user
@@ -342,7 +459,13 @@ class DefaultMainRepository(
                         "Direction share status successfully updated!"
                     )
                 }
-                .addOnFailureListener { e -> Log.w(TAG, "Error updating direction share status", e) }
+                .addOnFailureListener { e ->
+                    Log.w(
+                        TAG,
+                        "Error updating direction share status",
+                        e
+                    )
+                }
         }
     }
 
