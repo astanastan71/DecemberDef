@@ -34,7 +34,7 @@ fun directionListApp(
         HomeRoute.DirectionScreen.name,
         modifier = Modifier.padding(padding)
     ) {
-        composable(route = HomeRoute.DirectionScreen.name) { it ->
+        composable(route = HomeRoute.DirectionScreen.name) {
             when (directionListState) {
                 is CollectionsListGetState.Success ->
                     directionsList(

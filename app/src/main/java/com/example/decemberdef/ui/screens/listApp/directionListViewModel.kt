@@ -225,6 +225,7 @@ class DirectionListViewModel(
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
         val intent = Intent(context.applicationContext, Notification::class.java)
+        intent.action = "ALARM_ACTION"
 
         intent.putExtra(titleExtra, title)
         intent.putExtra(messageExtra, description)
@@ -285,8 +286,7 @@ class DirectionListViewModel(
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val time = time
-        alarmManager.set(AlarmManager.RTC_WAKEUP, time, pendingIntent)
+        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, time, pendingIntent)
         showAlert("Уведомление назначено", time, title, description, localContext)
     }
 

@@ -1,6 +1,9 @@
 package com.example.decemberdef.ui.screens.listApp.components
 
+import android.content.ContentValues.TAG
 import android.icu.util.Calendar
+import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,11 +15,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AlignHorizontalCenter
+import androidx.compose.material.icons.filled.AlignHorizontalLeft
+import androidx.compose.material.icons.filled.AlignHorizontalRight
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.FormatBold
+import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material.icons.filled.NotificationAdd
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -37,23 +50,30 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.core.text.HtmlCompat
 import coil.compose.AsyncImage
 import com.example.decemberdef.R
 import com.example.decemberdef.data.Direction
@@ -62,6 +82,7 @@ import com.example.decemberdef.ui.screens.listApp.DirectionListViewModel
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
+import kotlinx.coroutines.launch
 
 @Composable
 fun taskList(
@@ -75,6 +96,7 @@ fun taskList(
     scheduleNotification: (Long, String, String, Boolean, String, Boolean) -> Unit = { _, _, _, _, _, _ -> },
     cancelNotification: (Int, String, String, Boolean, String, Boolean) -> Unit = { _, _, _, _, _, _ -> },
 ) {
+    val taskState = rememberLazyListState()
     var addList: MutableList<Task> = mutableListOf()
     addList.add(
         Task(
@@ -83,7 +105,7 @@ fun taskList(
         )
     )
 
-    LazyColumn(contentPadding = PaddingValues(5.dp)) {
+    LazyColumn(contentPadding = PaddingValues(5.dp), state = taskState) {
         items(addList) {
             addTaskItem(
                 task = it,
@@ -91,9 +113,9 @@ fun taskList(
                 modifier = Modifier.padding(8.dp)
             )
         }
-        items(tasks.reversed()) {
+        itemsIndexed(tasks.reversed()) { index, task ->
             taskItem(
-                item = it,
+                item = task,
                 modifier = Modifier.padding(8.dp),
                 onDateTimeConfirm = onDateTimeConfirm,
                 onCompletionStatusClick = onCompletionStatusClick,
@@ -101,7 +123,9 @@ fun taskList(
                 onTitleChange = onTitleChange,
                 deleteTask = deleteTask,
                 scheduleNotification = scheduleNotification,
-                cancelNotification = cancelNotification
+                cancelNotification = cancelNotification,
+                taskState = taskState,
+                index = index
             )
         }
     }
@@ -135,7 +159,7 @@ fun addTaskItem(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun taskItem(
     item: Task,
@@ -146,10 +170,14 @@ fun taskItem(
     linkItem: Boolean = false,
     onTitleChange: (String, String) -> Unit = { _, _ -> },
     deleteTask: (Task) -> Unit = { _ -> },
+    taskState: LazyListState,
     scheduleNotification: (Long, String, String, Boolean, String, Boolean) -> Unit = { _, _, _, _, _, _ -> },
     cancelNotification: (Int, String, String, Boolean, String, Boolean) -> Unit = { _, _, _, _, _, _ -> },
+    index: Int = 0,
     modifier: Modifier = Modifier
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
     var text by remember { mutableStateOf(item.title) }
     val keyboardController = LocalSoftwareKeyboardController.current
     var expanded by remember { mutableStateOf(false) }
@@ -160,31 +188,29 @@ fun taskItem(
     val openDialog = remember { mutableStateOf(false) }
     var isStartNotificationActive by remember { mutableStateOf(item.startNotificationActive) }
     val milliseconds = item.timeStart.seconds * 1000 + item.timeStart.nanoseconds / 1000000
-//    if (isStartNotificationActive){
-//        Log.d(TAG, "MilisecondsStart : $milliseconds")
-//        Log.d(TAG, "currentTime : ${System.currentTimeMillis()}")
-//        if (milliseconds<System.currentTimeMillis()){
-//            Log.d(TAG, "Miliseconds lower that current time")
-//            cancelNotification(
-//                item.notificationStartId,
-//                item.title,
-//                taskEditorState.toHtml(),
-//                true,
-//                item.uid,
-//                false
-//            )
-//        }
-//    }
-
-
-    taskEditorState
-        .toggleSpanStyle(
-            SpanStyle(
-                fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
-                fontWeight = FontWeight.Bold
+    var paragraphStyle by remember { mutableStateOf(ParagraphStyle(textAlign = TextAlign.Start)) }
+    var boldSelected by rememberSaveable { mutableStateOf(false) }
+    var underlinedSelected by rememberSaveable { mutableStateOf(false) }
+    if (isStartNotificationActive) {
+        if (milliseconds < System.currentTimeMillis()) {
+            Log.d(TAG, "Milliseconds lower that current time")
+            cancelNotification(
+                item.notificationStartId,
+                item.title,
+                HtmlCompat.fromHtml(
+                    item.description,
+                    HtmlCompat.FROM_HTML_MODE_COMPACT
+                ).toString(),
+                true,
+                item.uid,
+                false
             )
-        )
-
+            isStartNotificationActive = !isStartNotificationActive
+        }
+    }
+    taskEditorState.toggleParagraphStyle(
+        paragraphStyle
+    )
     if (openDialog.value) {
         titleChangeDialog(
             onConfirmation = { text ->
@@ -252,6 +278,13 @@ fun taskItem(
                         taskEditorState.setHtml(item.description)
                     }
                     expanded = !expanded
+                    keyboardController?.hide()
+                    coroutineScope.launch {
+                        taskState.scrollToItem(index)
+                    }
+                    if (taskEditorState.toHtml() != item.description) {
+                        onTaskDescriptionClick(taskEditorState, item.uid)
+                    }
                 }) {
                     Icon(
                         imageVector = if (expanded)
@@ -267,6 +300,82 @@ fun taskItem(
         if (expanded) {
             Row(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.weight(4f)) {
+                    Row(modifier = Modifier.fillMaxSize()) {
+                        IconButton(onClick = {
+                            when (paragraphStyle) {
+                                ParagraphStyle(textAlign = TextAlign.Start) -> {
+                                    paragraphStyle = ParagraphStyle(textAlign = TextAlign.Center)
+                                }
+
+                                ParagraphStyle(textAlign = TextAlign.Center) -> {
+                                    paragraphStyle = ParagraphStyle(textAlign = TextAlign.End)
+                                }
+
+                                ParagraphStyle(textAlign = TextAlign.End) -> {
+                                    paragraphStyle = ParagraphStyle(textAlign = TextAlign.Start)
+                                }
+                            }
+                        }
+                        ) {
+                            Icon(
+                                imageVector =
+                                when (paragraphStyle) {
+                                    ParagraphStyle(textAlign = TextAlign.Start) -> Icons.Default.AlignHorizontalLeft
+                                    ParagraphStyle(textAlign = TextAlign.Center) ->
+                                        Icons.Default.AlignHorizontalCenter
+
+                                    ParagraphStyle(textAlign = TextAlign.End) ->
+                                        Icons.Default.AlignHorizontalRight
+
+                                    else -> {
+                                        Icons.Default.Face
+                                    }
+                                },
+                                contentDescription = stringResource(R.string.Bold),
+                                modifier = Modifier.padding(5.dp)
+                            )
+                        }
+                        IconButton(onClick = {
+                            taskEditorState.toggleSpanStyle(
+                                SpanStyle(
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                            boldSelected = !boldSelected
+                        }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FormatBold,
+                                contentDescription = stringResource(R.string.Bold),
+                                tint = if (!boldSelected) {
+                                    Color.Gray
+                                } else {
+                                    Color.Black
+                                },
+                                modifier = Modifier.padding(5.dp)
+                            )
+                        }
+                        IconButton(onClick = {
+                            taskEditorState.toggleSpanStyle(
+                                SpanStyle(
+                                    textDecoration = TextDecoration.Underline
+                                )
+                            )
+                            underlinedSelected = !underlinedSelected
+                        }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FormatUnderlined,
+                                contentDescription = stringResource(R.string.underlined),
+                                tint = if (!underlinedSelected) {
+                                    Color.Gray
+                                } else {
+                                    Color.Black
+                                },
+                                modifier = Modifier.padding(5.dp)
+                            )
+                        }
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
@@ -288,7 +397,15 @@ fun taskItem(
                                     keyboardController?.hide()
                                 }
                             ),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .onFocusEvent {
+                                    if (it.isFocused) {
+                                        coroutineScope.launch {
+                                            bringIntoViewRequester.bringIntoView()
+                                        }
+                                    }
+                                }
                         )
                     }
                     Row(
@@ -296,13 +413,57 @@ fun taskItem(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         if (!readOnly) {
-                            dateTimeItem(
-                                dateState = dateStateStart,
-                                dateItem = item.timeStart.toDate().toLocaleString(),
-                                item = item,
-                                onDateTimeConfirm = onDateTimeConfirm,
-                                isStart = true
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                dateTimeItem(
+                                    dateState = dateStateStart,
+                                    dateItem = item.timeStart.toDate().toLocaleString(),
+                                    item = item,
+                                    onDateTimeConfirm = onDateTimeConfirm,
+                                    isStart = true
+                                )
+                                IconButton(onClick = {
+                                    if (isStartNotificationActive) {
+                                        cancelNotification(
+                                            item.notificationStartId,
+                                            item.title,
+                                            HtmlCompat.fromHtml(
+                                                item.description,
+                                                HtmlCompat.FROM_HTML_MODE_COMPACT
+                                            ).toString(),
+                                            true,
+                                            item.uid,
+                                            false
+                                        )
+                                    } else {
+                                        if (milliseconds != null) {
+                                            scheduleNotification(
+                                                milliseconds,
+                                                item.title,
+                                                HtmlCompat.fromHtml(
+                                                    item.description,
+                                                    HtmlCompat.FROM_HTML_MODE_COMPACT
+                                                ).toString(),
+                                                true,
+                                                item.uid,
+                                                true
+                                            )
+                                        }
+                                    }
+                                    isStartNotificationActive = !isStartNotificationActive
+                                }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.NotificationAdd,
+                                        contentDescription = stringResource(R.string.create_notification),
+                                        tint = if (isStartNotificationActive) Color.Black
+                                        else Color.Gray,
+                                        modifier = Modifier.padding(5.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                     Row(
@@ -361,44 +522,6 @@ fun taskItem(
                                 imageVector = ImageVector.vectorResource(id = R.drawable.delete),
                                 tint = MaterialTheme.colorScheme.primary,
                                 contentDescription = stringResource(R.string.delete),
-                                modifier = Modifier.padding(5.dp)
-                            )
-                        }
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        IconButton(onClick = {
-                            if (isStartNotificationActive) {
-                                cancelNotification(
-                                    item.notificationStartId,
-                                    item.title,
-                                    taskEditorState.toHtml(),
-                                    true,
-                                    item.uid,
-                                    false
-                                )
-                            } else {
-                                if (milliseconds != null) {
-                                    scheduleNotification(
-                                        milliseconds,
-                                        item.title,
-                                        taskEditorState.toHtml(),
-                                        true,
-                                        item.uid,
-                                        true
-                                    )
-                                }
-                            }
-                            isStartNotificationActive = !isStartNotificationActive
-                        }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.NotificationAdd,
-                                contentDescription = stringResource(R.string.create_notification),
-                                tint = if (isStartNotificationActive) Color.Black
-                                else Color.Gray,
                                 modifier = Modifier.padding(5.dp)
                             )
                         }

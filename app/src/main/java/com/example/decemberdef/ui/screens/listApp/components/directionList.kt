@@ -92,7 +92,6 @@ fun directionsList(
     val listState = rememberLazyListState()
     var localDirections = directions
     var addList: MutableList<Direction> = mutableListOf()
-    val coroutineScope = rememberCoroutineScope()
     addList.add(
         Direction(
             title = stringResource(id = R.string.add),
@@ -170,7 +169,6 @@ fun directionItem(
     var paragraphStyle by remember { mutableStateOf(ParagraphStyle(textAlign = TextAlign.Start)) }
     var boldSelected by rememberSaveable { mutableStateOf(false) }
     var underlinedSelected by rememberSaveable { mutableStateOf(false) }
-    var paragraphStyleIcon = Icons.Default.AlignHorizontalLeft
 
 
     val coroutineScope = rememberCoroutineScope()
@@ -179,7 +177,6 @@ fun directionItem(
     val keyboardController = LocalSoftwareKeyboardController.current
     val descriptionEditorState = rememberRichTextState()
     var expanded by remember { mutableStateOf(false) }
-    var isDone by remember { mutableStateOf(direction.isDone) }
     var shared by remember { mutableStateOf(direction.shared) }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
 
@@ -287,17 +284,14 @@ fun directionItem(
                             when (paragraphStyle) {
                                 ParagraphStyle(textAlign = TextAlign.Start) -> {
                                     paragraphStyle = ParagraphStyle(textAlign = TextAlign.Center)
-                                    paragraphStyleIcon = Icons.Default.AlignHorizontalCenter
                                 }
 
                                 ParagraphStyle(textAlign = TextAlign.Center) -> {
                                     paragraphStyle = ParagraphStyle(textAlign = TextAlign.End)
-                                    paragraphStyleIcon = Icons.Default.AlignHorizontalRight
                                 }
 
                                 ParagraphStyle(textAlign = TextAlign.End) -> {
                                     paragraphStyle = ParagraphStyle(textAlign = TextAlign.Start)
-                                    paragraphStyleIcon = Icons.Default.AlignHorizontalLeft
                                 }
                             }
                         }
@@ -358,7 +352,6 @@ fun directionItem(
                                 modifier = Modifier.padding(5.dp)
                             )
                         }
-
                     }
                     Row(modifier = Modifier.fillMaxSize()) {
                         RichTextEditor(

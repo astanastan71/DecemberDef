@@ -11,7 +11,8 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -62,6 +63,7 @@ fun horizontalMonthCalendar(
     )
 
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
+    val taskState = rememberLazyListState()
 
     Column() {
         HorizontalCalendar(
@@ -87,13 +89,15 @@ fun horizontalMonthCalendar(
                 }
             }
         )
-        LazyColumn(contentPadding = PaddingValues(5.dp)) {
-            items(filteredTaskList) {
+        LazyColumn(contentPadding = PaddingValues(5.dp), state = taskState) {
+            itemsIndexed(filteredTaskList) { index, task ->
                 taskItem(
                     readOnly = true,
-                    item = it,
+                    item = task,
                     modifier = Modifier.padding(8.dp),
-                    onTaskDescriptionClick = {_,_ -> }
+                    onTaskDescriptionClick = {_,_ -> },
+                    index = index,
+                    taskState = taskState
                 )
             }
         }

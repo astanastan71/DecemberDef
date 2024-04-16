@@ -51,6 +51,8 @@ android {
 }
 
 dependencies {
+    implementation("com.mohamedrejeb.ksoup:ksoup-html:0.3.1")
+    implementation("com.mohamedrejeb.ksoup:ksoup-entities:0.3.1")
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4'
     implementation "com.google.dagger:hilt-android:2.44"
     implementation("io.coil-kt:coil-compose:2.4.0")

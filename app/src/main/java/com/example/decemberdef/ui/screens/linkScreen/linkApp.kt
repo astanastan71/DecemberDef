@@ -7,7 +7,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -49,14 +50,17 @@ fun linkApp(
             }
         }
         Row(){
-            LazyColumn(contentPadding = PaddingValues(5.dp)) {
-                items(taskList) {
+            val taskState = rememberLazyListState()
+            LazyColumn(contentPadding = PaddingValues(5.dp), state = taskState) {
+                itemsIndexed(taskList) { index, task ->
                     taskItem(
                         linkItem = parameter != null,
                         readOnly = true,
-                        item = it,
+                        item = task,
                         modifier = Modifier.padding(8.dp),
-                        onTaskDescriptionClick = { _, _ -> }
+                        onTaskDescriptionClick = { _, _ -> },
+                        index = index,
+                        taskState = taskState
                     )
                 }
             }

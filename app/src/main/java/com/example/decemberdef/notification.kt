@@ -9,7 +9,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 
 // Constants for notification
-const val notificationID = "121"
+const val notificationID = "notificationID"
 const val channelID = "HighImportance"
 const val titleExtra = "titleExtra"
 const val messageExtra = "messageExtra"
@@ -17,6 +17,7 @@ const val messageExtra = "messageExtra"
 class Notification : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
+        val genId = intent.getIntExtra(notificationID, 0)
         val notification = NotificationCompat.Builder(context, channelID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(intent.getStringExtra(titleExtra)) // Set title from intent
@@ -25,7 +26,7 @@ class Notification : BroadcastReceiver() {
 
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        manager.notify(notificationID.toInt(), notification)
-        Log.d(TAG, "NotificationId: ${notificationID.toInt()}")
+        manager.notify(genId, notification)
+        Log.d(TAG, "NotificationId: $genId")
     }
 }
