@@ -2,12 +2,15 @@ package com.example.decemberdef.data
 
 import com.example.decemberdef.ui.screens.listApp.TaskGetState
 import com.example.decemberdef.ui.screens.signInApp.LogInState
+import com.example.decemberdef.ui.screens.signUpApp.AnonSignUpState
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseUser
 import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlinx.coroutines.flow.Flow
 
 interface MainRepository {
+    suspend fun getPermanentAccount(email: String, password: String): AnonSignUpState
+    suspend fun userInfoUpdate(userName: String)
     suspend fun getUserData(): User
     fun signOut()
     fun updateUser(firebaseUser: FirebaseUser?)
@@ -25,7 +28,12 @@ interface MainRepository {
     suspend fun getDirectionTasksForAll(directionId: String): Flow<MutableList<Task>>?
     suspend fun setNotificationId(taskId: String, directionId: String, start: Boolean, id: Int)
     suspend fun cancelNotification(taskId: String, directionId: String, start: Boolean)
-    suspend fun isStartNotificationActiveChange(taskId: String, directionId: String, active: Boolean)
+    suspend fun isStartNotificationActiveChange(
+        taskId: String,
+        directionId: String,
+        active: Boolean
+    )
+
     suspend fun setTaskDateStart(
         taskId: String,
         directionId: String,
@@ -39,6 +47,7 @@ interface MainRepository {
         directionId: String,
         directionProgress: Int
     )
+
     suspend fun addOtherUserDirection(userID: String, directionId: String, tasks: List<Task>)
     suspend fun setDirectionStatus(isDone: Boolean, directionId: String)
     suspend fun setDirectionDescription(text: RichTextState, directionId: String)

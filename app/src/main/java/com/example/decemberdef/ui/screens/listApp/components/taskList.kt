@@ -412,18 +412,18 @@ fun taskItem(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        if (!readOnly) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                dateTimeItem(
-                                    dateState = dateStateStart,
-                                    dateItem = item.timeStart.toDate().toLocaleString(),
-                                    item = item,
-                                    onDateTimeConfirm = onDateTimeConfirm,
-                                    isStart = true
-                                )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            dateTimeItem(
+                                dateState = dateStateStart,
+                                dateItem = item.timeStart.toDate().toLocaleString(),
+                                item = item,
+                                onDateTimeConfirm = onDateTimeConfirm,
+                                isStart = true
+                            )
+                            if (!readOnly) {
                                 IconButton(onClick = {
                                     if (isStartNotificationActive) {
                                         cancelNotification(
@@ -481,69 +481,71 @@ fun taskItem(
                     }
 
                 }
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(5.dp),
-                    horizontalAlignment = Alignment.End
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
+                if (!readOnly) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(5.dp),
+                        horizontalAlignment = Alignment.End
                     ) {
-                        IconButton(onClick = {
-                            if (readOnly) {
-                            } else {
-                                isDone = !isDone
-                                onCompletionStatusClick(isDone, item.uid)
-                            }
-                        }
-                        ) {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(id = R.drawable.is_done),
-                                contentDescription = stringResource(R.string.is_done),
-                                tint = if (isDone)
-                                    Color.Green
-                                else
-                                    Color.Red,
-                                modifier = Modifier.padding(5.dp)
-                            )
-                        }
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        IconButton(onClick = {
-                            deleteTask(item)
-                        }
-                        ) {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(id = R.drawable.delete),
-                                tint = MaterialTheme.colorScheme.primary,
-                                contentDescription = stringResource(R.string.delete),
-                                modifier = Modifier.padding(5.dp)
-                            )
-                        }
-                    }
-                    if (linkItem) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center
                         ) {
                             IconButton(onClick = {
+                                if (readOnly) {
+                                } else {
+                                    isDone = !isDone
+                                    onCompletionStatusClick(isDone, item.uid)
+                                }
                             }
                             ) {
                                 Icon(
-                                    imageVector = ImageVector.vectorResource(id = R.drawable.add),
-                                    contentDescription = stringResource(R.string.add),
+                                    imageVector = ImageVector.vectorResource(id = R.drawable.is_done),
+                                    contentDescription = stringResource(R.string.is_done),
+                                    tint = if (isDone)
+                                        Color.Green
+                                    else
+                                        Color.Red,
                                     modifier = Modifier.padding(5.dp)
                                 )
                             }
                         }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            IconButton(onClick = {
+                                deleteTask(item)
+                            }
+                            ) {
+                                Icon(
+                                    imageVector = ImageVector.vectorResource(id = R.drawable.delete),
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    contentDescription = stringResource(R.string.delete),
+                                    modifier = Modifier.padding(5.dp)
+                                )
+                            }
+                        }
+                        if (linkItem) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                IconButton(onClick = {
+                                }
+                                ) {
+                                    Icon(
+                                        imageVector = ImageVector.vectorResource(id = R.drawable.add),
+                                        contentDescription = stringResource(R.string.add),
+                                        modifier = Modifier.padding(5.dp)
+                                    )
+                                }
+                            }
+                        }
+
+
                     }
-
-
                 }
 
             }

@@ -4,7 +4,7 @@ import com.google.firebase.Timestamp
 import java.util.Date
 
 data class Task(
-    val title: String = "",
+    val title: String = "Без названия",
     var uid: String = "no id",
     val description: String = "",
     val completed: Boolean = false,

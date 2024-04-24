@@ -21,7 +21,7 @@ sealed class BottomNavItem(
     )
     object Calendar : BottomNavItem(
         "Календарь",
-        R.drawable.task_button,
+        R.drawable.schedule_ic,
         Route.TaskScreen.route
     )
 }

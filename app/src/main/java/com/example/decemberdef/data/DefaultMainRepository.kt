@@ -4,9 +4,12 @@ import android.content.ContentValues.TAG
 import android.util.Log
 import com.example.decemberdef.ui.screens.listApp.TaskGetState
 import com.example.decemberdef.ui.screens.signInApp.LogInState
+import com.example.decemberdef.ui.screens.signUpApp.AnonSignUpState
 import com.google.firebase.Timestamp
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.userProfileChangeRequest
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -24,18 +27,75 @@ class DefaultMainRepository(
     private var user: FirebaseUser?,
 ) : MainRepository {
 
+    override suspend fun getPermanentAccount(email: String, password: String): AnonSignUpState {
+        val credential = EmailAuthProvider.getCredential(email, password)
+        try {
+            auth.currentUser!!.linkWithCredential(credential)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Log.d(TAG, "linkWithCredential:success")
+                        val user = task.result?.user
+                        updateUser(user)
+                    } else {
+                        Log.w(TAG, "linkWithCredential:failure", task.exception)
+                        throw Exception("linkWithCredential:failure")
+                    }
+                }
+            return AnonSignUpState.Success
+        } catch (e: Exception) {
+            return AnonSignUpState.Error
+
+        }
+
+    }
+
+    override suspend fun userInfoUpdate(
+        userName: String
+    ) {
+        val profileUpdates = userProfileChangeRequest {
+            displayName = userName
+        }
+        user!!.updateProfile(profileUpdates)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "User profile updated.")
+                }
+            }
+    }
+
     override suspend fun getUserData(): User {
         val localUser = user
-        return if (localUser != null) {
-            User(
-                userID = localUser.uid,
-                isEmailVerified = localUser.isEmailVerified,
-                isAnon = localUser.isAnonymous,
-                userName = localUser.displayName,
-                userEmail = localUser.email,
-                userPhoto = localUser.photoUrl
-            )
-        } else User(
+        if (localUser != null) {
+            return if (localUser.isAnonymous) {
+                User(
+                    userID = localUser.uid,
+                    isEmailVerified = localUser.isEmailVerified,
+                    isAnon = localUser.isAnonymous,
+                    userPhoto = localUser.photoUrl
+                )
+            } else {
+                if (localUser.displayName != null) {
+                    User(
+                        userID = localUser.uid,
+                        isEmailVerified = localUser.isEmailVerified,
+                        isAnon = localUser.isAnonymous,
+                        userName = localUser.displayName!!,
+                        userEmail = localUser.email!!,
+                        userPhoto = localUser.photoUrl
+                    )
+                } else {
+                    User(
+                        userID = localUser.uid,
+                        isEmailVerified = localUser.isEmailVerified,
+                        isAnon = localUser.isAnonymous,
+                        userEmail = localUser.email!!,
+                        userPhoto = localUser.photoUrl
+                    )
+                }
+
+            }
+
+        } else return User(
             userID = "Not Found"
         )
     }
@@ -343,7 +403,7 @@ class DefaultMainRepository(
                 .collection("tasks")
                 .document(taskId)
 
-            if (start){
+            if (start) {
                 customCollectionPath
                     .update(
                         "notificationStartId", 0
@@ -355,18 +415,18 @@ class DefaultMainRepository(
                         )
                     }
                     .addOnFailureListener { e -> Log.w(TAG, "Error updating document", e) }
-            }
-            else {customCollectionPath
-                .update(
-                    "notificationEndId", 0
-                )
-                .addOnSuccessListener {
-                    Log.d(
-                        TAG,
-                        "notificationEndId successfully updated!"
+            } else {
+                customCollectionPath
+                    .update(
+                        "notificationEndId", 0
                     )
-                }
-                .addOnFailureListener { e -> Log.w(TAG, "Error updating document", e) }
+                    .addOnSuccessListener {
+                        Log.d(
+                            TAG,
+                            "notificationEndId successfully updated!"
+                        )
+                    }
+                    .addOnFailureListener { e -> Log.w(TAG, "Error updating document", e) }
 
             }
 

@@ -1,6 +1,5 @@
 package com.example.cmv3.screens.Auth
 
-import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,14 +19,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.decemberdef.R
-import com.example.decemberdef.ui.screens.signInApp.LogInState
 import com.example.decemberdef.ui.theme.DecemberDefTheme
+import com.example.decemberdef.ui.theme.roboto
 
 @Composable
 fun LoginBox(
@@ -36,7 +39,6 @@ fun LoginBox(
     onTextChangePass: (String) -> Unit,
     valuePass: String,
     onClickSignIn: () -> Unit,
-    onClickAnonSign: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column() {
@@ -51,6 +53,12 @@ fun LoginBox(
                 ) {
                     Text(
                         text = stringResource(id = R.string.get_started),
+                        style = TextStyle(
+                            textAlign = TextAlign.Center,
+                            fontFamily = roboto,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 24.sp,
+                        ),
                         modifier = Modifier
                             .padding(top = 15.dp)
                             .clip(RoundedCornerShape(50.dp))
@@ -63,7 +71,7 @@ fun LoginBox(
                         .padding(top = 60.dp, start = 15.dp, end = 15.dp)
                 ) {
                     textEdit(
-                        label = R.string.login,
+                        label = R.string.email,
                         onTextChange = onTextChangeLog,
                         value = valueLog
                     )
@@ -92,22 +100,13 @@ fun LoginBox(
                         onClick = onClickSignIn
                     ) {
                         Text(
-                            text = stringResource(id = R.string.log_in)
-                        )
-
-                    }
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 15.dp, bottom = 15.dp),
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    Button(
-                        onClick = onClickAnonSign
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.anon_sign)
+                            text = stringResource(id = R.string.log_in),
+                            style = TextStyle(
+                                textAlign = TextAlign.Center,
+                                fontFamily = roboto,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 14.sp,
+                            ),
                         )
 
                     }
@@ -128,7 +127,8 @@ fun LoginBox(
 
 @Composable
 fun ToSignBox(
-    onSignUpButtonClicked: () -> Unit
+    onSignUpButtonClicked: () -> Unit,
+    onClickAnonSign: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -137,7 +137,36 @@ fun ToSignBox(
         verticalArrangement = Arrangement.Bottom
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            Text(text = stringResource(id = R.string.Log_in_text))
+            Text(
+                text = stringResource(id = R.string.Log_in_text),
+                style = TextStyle(
+                    textAlign = TextAlign.Center,
+                    fontFamily = roboto,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp,
+                ),
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 15.dp, bottom = 15.dp),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Button(
+                onClick = onClickAnonSign
+            ) {
+                Text(
+                    text = stringResource(id = R.string.anon_sign),
+                    style = TextStyle(
+                        textAlign = TextAlign.Center,
+                        fontFamily = roboto,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 14.sp,
+                    ),
+                )
+
+            }
         }
         Row(
             modifier = Modifier
@@ -149,7 +178,13 @@ fun ToSignBox(
                 onClick = onSignUpButtonClicked
             ) {
                 Text(
-                    text = stringResource(id = R.string.sign_up)
+                    text = stringResource(id = R.string.sign_up),
+                    style = TextStyle(
+                        textAlign = TextAlign.Center,
+                        fontFamily = roboto,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 12.sp,
+                    ),
                 )
             }
         }
@@ -202,14 +237,14 @@ fun LoginAppPreview() {
                 onTextChangeLog = {
                 },
                 onTextChangePass = {
-                },
-                onClickAnonSign = {}
+                }
 
 
             )
-            ToSignBox {
+            ToSignBox(
+                {},
                 {}
-            }
+            )
 
         }
 

@@ -6,7 +6,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,13 +38,10 @@ fun navigationBar(navController: NavController) {
         items.forEach { screen ->
             val selected = currentDestination == screen.route
             NavigationBarItem(
-                selected = selected,
+                selected = false,
                 onClick = {
                     navController.navigate(screen.route)
                 },
-                colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = MaterialTheme.colorScheme.background
-                ),
                 icon = {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -53,7 +49,9 @@ fun navigationBar(navController: NavController) {
                     ) {
                         Icon(
                             imageVector = ImageVector.vectorResource(id = screen.icon),
-                            contentDescription = screen.title
+                            contentDescription = screen.title,
+                            tint = if (selected) MaterialTheme.colorScheme.inversePrimary
+                            else MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         if (selected) {
                             Text(
@@ -63,6 +61,8 @@ fun navigationBar(navController: NavController) {
                                     fontFamily = roboto,
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.inversePrimary
+
                                 )
                             )
                         }

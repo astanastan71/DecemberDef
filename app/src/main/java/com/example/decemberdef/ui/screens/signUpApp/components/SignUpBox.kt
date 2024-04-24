@@ -19,13 +19,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.cmv3.screens.Auth.textEdit
 import com.example.decemberdef.R
 import com.example.decemberdef.ui.theme.DecemberDefTheme
+import com.example.decemberdef.ui.theme.roboto
 
 @Composable
 fun SignUpBox(
@@ -36,7 +41,7 @@ fun SignUpBox(
     valueVerificationPass: String,
     isValidPassword: Boolean,
     onPasswordVerification: (String) -> Unit,
-    onClickSignUp: ()->Unit,
+    onClickSignUp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column() {
@@ -51,6 +56,12 @@ fun SignUpBox(
                 ) {
                     Text(
                         text = stringResource(id = R.string.sign_up),
+                        style = TextStyle(
+                            textAlign = TextAlign.Center,
+                            fontFamily = roboto,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 24.sp,
+                        ),
                         modifier = Modifier
                             .padding(top = 15.dp)
                             .clip(RoundedCornerShape(50.dp))
@@ -120,7 +131,13 @@ fun SignUpBox(
                         enabled = isValidPassword
                     ) {
                         Text(
-                            text = stringResource(id = R.string.sign_up_confirm)
+                            text = stringResource(id = R.string.sign_up_confirm),
+                            style = TextStyle(
+                                textAlign = TextAlign.Center,
+                                fontFamily = roboto,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 12.sp,
+                            ),
                         )
 
                     }

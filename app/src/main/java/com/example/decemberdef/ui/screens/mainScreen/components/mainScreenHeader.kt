@@ -23,13 +23,15 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.decemberdef.R
-import com.example.decemberdef.ui.screens.authScreen.components.topAppBarAuthScreen
 import com.example.decemberdef.ui.theme.DecemberDefTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun topAppBarMainScreen(
+    isAnon: Boolean,
+    onAnonRegisterClick: () -> Unit,
     onLogOutClick: () -> Unit,
+    changeDialogStatus: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -58,14 +60,35 @@ fun topAppBarMainScreen(
             DropdownMenu(expanded = expanded,
                 onDismissRequest = { expanded = false }) {
                 Text(
-                    text = stringResource(id = R.string.log_out),
-                    modifier = Modifier.clickable(onClick = onLogOutClick),
+                    text = stringResource(id = R.string.changeUserInfo),
+                    modifier = Modifier.clickable(onClick = {
+                        changeDialogStatus()
+                        expanded = false
+                    }),
                     style = MaterialTheme.typography.displaySmall
                 )
+                if (isAnon) {
+                    Text(
+                        text = stringResource(id = R.string.register),
+                        modifier = Modifier.clickable(onClick = {
+                            onAnonRegisterClick()
+                            expanded = false
+                        }),
+                        style = MaterialTheme.typography.displaySmall
+                    )
+                }
+
+                Text(
+                    text = stringResource(id = R.string.log_out),
+                    modifier = Modifier.clickable(
+                        onClick = onLogOutClick
+                    ),
+                    style = MaterialTheme.typography.displaySmall
+                )
+
             }
         }
     )
-
 }
 
 @Preview
@@ -74,7 +97,10 @@ fun HeaderPreview() {
     DecemberDefTheme {
         Surface() {
             topAppBarMainScreen(
-                onLogOutClick = {}
+                true,
+                onLogOutClick = {},
+                changeDialogStatus = {},
+                onAnonRegisterClick = {}
             )
         }
     }

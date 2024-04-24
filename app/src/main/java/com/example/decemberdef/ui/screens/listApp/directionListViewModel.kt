@@ -265,26 +265,32 @@ class DirectionListViewModel(
         start: Boolean,
         active: Boolean
     ) {
+        //Инициализация намерения уведомления
         val intent = Intent(context.applicationContext, Notification::class.java)
         intent.action = "ALARM_ACTION"
 
+        //Генерация идентификатора
         val genId = generateUniqueIntId()
 
+        //Заполнения данными
         intent.putExtra(titleExtra, title)
         intent.putExtra(messageExtra, description)
         intent.putExtra(notificationID, genId)
 
+        //Обновления данных задачи
         viewModelScope.launch {
             mainRepository.setNotificationId(taskId, collectionId, start, genId)
             mainRepository.isStartNotificationActiveChange(taskId, collectionId, active)
         }
 
+        //Отложенное намерение
         val pendingIntent = PendingIntent.getBroadcast(
             context.applicationContext,
             genId,
             intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
+        //Передача намерения alarmManager в назначенное время
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, time, pendingIntent)
         showAlert("Уведомление назначено", time, title, description, localContext)

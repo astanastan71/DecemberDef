@@ -6,6 +6,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -23,12 +24,12 @@ import com.google.firebase.auth.auth
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthScreen(
-    error: String? = null,
     parameter: String? = null,
     navController: NavHostController = rememberNavController()
 ) {
     val authScreenViewModel: AuthScreenViewModel = viewModel(factory = AuthScreenViewModel.Factory)
     val uiState = authScreenViewModel.uiState.collectAsState().value
+    val softwareKeyboardController = LocalSoftwareKeyboardController.current
     var auth: FirebaseAuth = Firebase.auth
     auth.addAuthStateListener {
         authScreenViewModel.changeUserState(it.currentUser == null)
@@ -60,7 +61,3 @@ fun AuthScreen(
 
     }
 }
-//    val backStackEntry by navController.currentBackStackEntryAsState()
-//    val currentScreen = AuthRoute.valueOf(
-//        backStackEntry?.destination?.route ?: AuthRoute.SignIn.name
-//    )

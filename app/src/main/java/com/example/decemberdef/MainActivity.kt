@@ -105,8 +105,6 @@ class MainActivity : ComponentActivity() {
         val importance = NotificationManager.IMPORTANCE_HIGH
         val mChannel = NotificationChannel("HighImportance", name, importance)
         mChannel.description = descriptionText
-        // Register the channel with the system. You can't change the importance
-        // or other notification behaviors after this.
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(mChannel)
     }

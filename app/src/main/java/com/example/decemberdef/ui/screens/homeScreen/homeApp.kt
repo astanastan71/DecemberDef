@@ -30,7 +30,7 @@ fun HomeApp(
         {
             composable(route = HomeRoute.Start.name) {
                 homeScreenBox(
-                    userName = uiState.user.userID,
+                    userName = uiState.user.userName,
                     onClickStart = { navController.navigate(HomeRoute.TaskAdding.name) }
                 )
             }

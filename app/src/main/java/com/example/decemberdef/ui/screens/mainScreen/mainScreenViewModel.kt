@@ -14,7 +14,12 @@ import com.example.decemberdef.MainApplication
 import com.example.decemberdef.data.Direction
 import com.example.decemberdef.data.MainRepository
 import com.example.decemberdef.data.Task
+import com.example.decemberdef.ui.screens.mainScreen.states.MainScreenState
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 sealed interface LogOutState {
@@ -39,6 +44,9 @@ class MainScreenViewModel(
     private val mainRepository: MainRepository
 ) : ViewModel() {
 
+    private val _uiState = MutableStateFlow(MainScreenState())
+    val uiState: StateFlow<MainScreenState> = _uiState.asStateFlow()
+
     var collectionsListGetState: CollectionsListGetState by mutableStateOf(CollectionsListGetState.Loading)
         private set
 
@@ -50,12 +58,29 @@ class MainScreenViewModel(
 
     init {
         getCollectionsData()
+        getUserData()
     }
 
-    fun addOtherUserDirection(parameter: String, tasks: List<Task>){
+    fun getUserData() {
+        viewModelScope.launch {
+            val userData = mainRepository.getUserData()
+            try {
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        user = userData
+                    )
+                }
+                Log.d(ContentValues.TAG, "Good went")
+            } catch (e: Exception) {
+                Log.e(ContentValues.TAG, "Bad Error: $e")
+            }
+        }
+    }
+
+    fun addOtherUserDirection(parameter: String, tasks: List<Task>) {
         val parts = parameter.split("AndAlso")
         viewModelScope.launch {
-            mainRepository.addOtherUserDirection(parts[1],parts[0], tasks)
+            mainRepository.addOtherUserDirection(parts[1], parts[0], tasks)
         }
     }
 
@@ -78,13 +103,11 @@ class MainScreenViewModel(
         val parts = parameter.split("AndAlso")
         viewModelScope.launch {
             tasksListGetState = try {
-                TasksListGetState.Success(mainRepository.getTasksListFromLink(parts[1],parts[0]))
-            }
-            catch (e:Exception){
+                TasksListGetState.Success(mainRepository.getTasksListFromLink(parts[1], parts[0]))
+            } catch (e: Exception) {
                 TasksListGetState.Error
             }
         }
-
 
 
     }
@@ -107,6 +130,14 @@ class MainScreenViewModel(
 
     fun reset() {
         logOutState = LogOutState.Loading
+    }
+
+    fun updateUserInfo(userName: String) {
+        viewModelScope.launch {
+            mainRepository.userInfoUpdate(userName)
+            getUserData()
+        }
+
     }
 
     companion object {

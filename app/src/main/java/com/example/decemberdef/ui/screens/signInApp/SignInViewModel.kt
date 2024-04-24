@@ -2,7 +2,6 @@ package com.example.decemberdef.ui.screens.signInApp
 
 import android.content.ContentValues.TAG
 import android.util.Log
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -13,13 +12,10 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.decemberdef.MainApplication
 import com.example.decemberdef.data.MainRepository
-import com.example.decemberdef.ui.screens.authScreen.states.AuthUiState
-import com.example.decemberdef.ui.screens.homeScreen.MainViewModel
 import com.example.decemberdef.ui.screens.signInApp.states.LoginPasswordState
 import com.example.decemberdef.ui.screens.signInApp.states.SignInUiState
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +23,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.lang.Exception
 
 
 sealed interface LogInState {
@@ -62,17 +57,22 @@ class SignInViewModel(
 
     fun signIn(login: String, password: String) {
         viewModelScope.launch {
-            auth.signInWithEmailAndPassword(login, password).addOnCompleteListener { task ->
-                logInState = if (task.isSuccessful) {
-                    LogInState.Success
-                } else {
-                    LogInState.Error
-
-                }
-                if (task.isCanceled) {
-                    Log.e(TAG, task.exception.toString())
+            try {
+                auth.signInWithEmailAndPassword(login, password).addOnCompleteListener { task ->
+                    logInState = if (task.isSuccessful) {
+                        LogInState.Success
+                    } else {
+                        LogInState.Error
+                    }
+                    if (task.isCanceled) {
+                        Log.e(TAG, task.exception.toString())
+                    }
                 }
             }
+            catch (e:Exception){
+                Log.w(TAG, "Error", e)
+            }
+
 
         }
     }
