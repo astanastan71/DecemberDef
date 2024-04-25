@@ -35,4 +35,6 @@
     <string name="changeUserInfo">Данные</string>
     <string name="userInfo">Данные пользователя</string>
     <string name="register">Регистрация</string>
+    <string name="apply_your_color">Изменить цвет</string>
+    <string name="link_add">Добавить ссылку</string>
 </resources>
