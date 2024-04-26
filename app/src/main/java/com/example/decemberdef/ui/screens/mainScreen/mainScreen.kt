@@ -23,7 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
@@ -92,7 +91,6 @@ fun mainScreen(
                         ),
                         modifier = Modifier
                             .padding(top = 15.dp)
-                            .clip(RoundedCornerShape(50.dp))
                     )
                     Text(
                         text = "Email пользователя: ${uiState.value.user.userEmail}",
@@ -103,7 +101,6 @@ fun mainScreen(
                         ),
                         modifier = Modifier
                             .padding(top = 15.dp)
-                            .clip(RoundedCornerShape(50.dp))
                     )
                     Text(
                         text = "Имя пользователя:",
@@ -114,7 +111,6 @@ fun mainScreen(
                         ),
                         modifier = Modifier
                             .padding(top = 15.dp)
-                            .clip(RoundedCornerShape(50.dp))
                     )
                     TextField(
                         value = userName,
@@ -254,8 +250,7 @@ fun mainScreen(
             }
             composable(route = BottomNavItem.DirectionChooser.route) {
                 directionListApp(
-                    directionListState = mainScreenViewModel.collectionsListGetState,
-                    padding = paddingValues
+                    directionListState = mainScreenViewModel.collectionsListGetState
                 )
             }
 

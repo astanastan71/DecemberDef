@@ -107,6 +107,17 @@ fun taskEditor(
                     )
                 )
                 colorPickerState = false
+            },
+            resetColor = {
+                taskEditorState.toggleSpanStyle(
+                    SpanStyle(
+                        color = Color.Black
+                    )
+                )
+                colorPickerState = false
+            },
+            dismissRequest = {
+                colorPickerState = false
             }
         )
     }
@@ -249,9 +260,11 @@ fun taskEditor(
 fun colorPickerDialog(
     onColorChanged: (ColorEnvelope) -> Unit,
     controller: ColorPickerController,
-    applyYourColor: () -> Unit
+    applyYourColor: () -> Unit,
+    resetColor: () -> Unit,
+    dismissRequest: () -> Unit
 ) {
-    Dialog(onDismissRequest = applyYourColor) {
+    Dialog(onDismissRequest = { dismissRequest() }) {
         Card() {
             Column() {
                 HsvColorPicker(
@@ -270,10 +283,10 @@ fun colorPickerDialog(
                     horizontalArrangement = Arrangement.Center,
                 ) {
                     TextButton(
-                        onClick = { applyYourColor() },
+                        onClick = { resetColor() },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text("Отмена")
+                        Text("Сбросить")
                     }
                     TextButton(
                         onClick = { applyYourColor() },

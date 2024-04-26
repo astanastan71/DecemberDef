@@ -67,12 +67,22 @@ class DefaultMainRepository(
         val localUser = user
         if (localUser != null) {
             return if (localUser.isAnonymous) {
-                User(
-                    userID = localUser.uid,
-                    isEmailVerified = localUser.isEmailVerified,
-                    isAnon = localUser.isAnonymous,
-                    userPhoto = localUser.photoUrl
-                )
+                if (localUser.displayName != null) {
+                    User(
+                        userID = localUser.uid,
+                        isEmailVerified = localUser.isEmailVerified,
+                        isAnon = localUser.isAnonymous,
+                        userName = localUser.displayName!!,
+                        userPhoto = localUser.photoUrl
+                    )
+                } else {
+                    User(
+                        userID = localUser.uid,
+                        isEmailVerified = localUser.isEmailVerified,
+                        isAnon = localUser.isAnonymous,
+                        userPhoto = localUser.photoUrl
+                    )
+                }
             } else {
                 if (localUser.displayName != null) {
                     User(

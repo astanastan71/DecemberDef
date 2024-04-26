@@ -101,7 +101,7 @@ fun directionsList(
     Column(
         modifier = Modifier
     ) {
-        LazyColumn(contentPadding = PaddingValues(5.dp), state = listState) {
+        LazyColumn(contentPadding = PaddingValues(top = 5.dp), state = listState) {
             items(addList) {
                 addDirectionItem(
                     direction = it,

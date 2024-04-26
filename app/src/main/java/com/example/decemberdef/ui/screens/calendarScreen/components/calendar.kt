@@ -21,8 +21,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -34,12 +35,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.decemberdef.data.Task
 import com.example.decemberdef.ui.screens.listApp.components.taskItem
 import com.example.decemberdef.ui.theme.DecemberDefTheme
+import com.example.decemberdef.ui.theme.roboto
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.WeekCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
@@ -86,13 +90,38 @@ fun horizontalMonthCalendar(
 
     var selectedDate by remember { mutableStateOf<LocalDate?>(LocalDate.now()) }
     val taskState = rememberLazyListState()
-    var isWeekMode by remember { mutableStateOf(true) }
+    var isWeekMode by remember { mutableStateOf(false) }
     val density = LocalDensity.current
 
     Column() {
-        Button(onClick = {isWeekMode = !isWeekMode}) {
-            
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            Text(
+                text = "Режим недели",
+                style = androidx.compose.ui.text.TextStyle(
+                    fontFamily = roboto,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp,
+                ),
+                modifier = Modifier
+                    .padding(top = 15.dp)
+            )
+            Switch(
+                checked = isWeekMode,
+                onCheckedChange = {
+                    isWeekMode = it
+                },
+                modifier = Modifier.padding(
+                    top = 2.dp,
+                    start = 10.dp
+                )
+            )
         }
+
         AnimatedVisibility(
             visible = !isWeekMode,
             enter = slideInVertically {
@@ -193,21 +222,29 @@ fun Day(
     isSelected: Boolean,
     onClick: (CalendarDay) -> Unit
 ) {
-    var color = Color.Black
+    var color: Color = MaterialTheme.colorScheme.onSurface
     if (day.position == DayPosition.MonthDate) {
-        for (task in tasksList) {
-            if (timestampToLocalDate(task.timeStart.seconds) == day.date) {
-                color = Color.Green
-                break
+        if (day.date == LocalDate.now()) {
+            color = Color.Green
+        } else if (isSelected) {
+            color = MaterialTheme.colorScheme.onPrimary
+        } else {
+            for (task in tasksList) {
+                if (timestampToLocalDate(task.timeStart.seconds) == day.date) {
+                    color = MaterialTheme.colorScheme.primary
+                    break
+                }
             }
+
         }
-    } else color = Color.Gray
+    } else
+        color = Color.Gray
     Box(
         modifier = Modifier
             .aspectRatio(1f)
             .clip(CircleShape)
             .background(
-                color = if (isSelected) Color.Green else Color.Transparent
+                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
             )
             .clickable(
                 enabled = day.position == DayPosition.MonthDate,
@@ -230,21 +267,29 @@ fun WeekDay(
     isSelected: Boolean,
     onClick: (WeekDay) -> Unit
 ) {
-    var color = Color.Black
+    var color: Color = MaterialTheme.colorScheme.onSurface
     if (day.position == WeekDayPosition.RangeDate) {
-        for (task in tasksList) {
-            if (timestampToLocalDate(task.timeStart.seconds) == day.date) {
-                color = Color.Green
-                break
+        if (day.date == LocalDate.now()) {
+            color = Color.Green
+        } else if (isSelected) {
+            color = MaterialTheme.colorScheme.onPrimary
+        } else {
+            for (task in tasksList) {
+                if (timestampToLocalDate(task.timeStart.seconds) == day.date) {
+                    color = MaterialTheme.colorScheme.primary
+                    break
+                }
             }
+
         }
-    } else color = Color.Gray
+    } else
+        color = Color.Gray
     Box(
         modifier = Modifier
             .aspectRatio(1f)
             .clip(CircleShape)
             .background(
-                color = if (isSelected) Color.Green else Color.Transparent
+                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
             )
             .clickable(
                 enabled = day.position == WeekDayPosition.RangeDate,

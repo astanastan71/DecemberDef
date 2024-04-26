@@ -1,11 +1,8 @@
 package com.example.decemberdef.ui.screens.listApp
 
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -20,7 +17,6 @@ import com.example.decemberdef.ui.screens.mainScreen.CollectionsListGetState
 
 @Composable
 fun directionListApp(
-    padding: PaddingValues,
     directionListState: CollectionsListGetState,
     viewModel: DirectionListViewModel = viewModel(factory = DirectionListViewModel.Factory)
 ) {
@@ -31,8 +27,7 @@ fun directionListApp(
     NavHost(
         navController = navController,
         startDestination =
-        HomeRoute.DirectionScreen.name,
-        modifier = Modifier.padding(padding)
+        HomeRoute.DirectionScreen.name
     ) {
         composable(route = HomeRoute.DirectionScreen.name) {
             when (directionListState) {
