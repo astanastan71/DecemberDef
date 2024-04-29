@@ -37,4 +37,5 @@
     <string name="register">Регистрация</string>
     <string name="apply_your_color">Изменить цвет</string>
     <string name="link_add">Добавить ссылку</string>
+    <string name="expand_text">Открыть расширенное окно текста</string>
 </resources>

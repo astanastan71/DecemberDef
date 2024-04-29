@@ -12,7 +12,7 @@ import com.mohamedrejeb.richeditor.model.rememberRichTextState
 
 @Composable
 fun customTaskStart(
-    taskEditorState: RichTextState,
+    taskEditorState: RichTextState = rememberRichTextState(),
     taskAdd: ()->Unit,
     modifier: Modifier = Modifier
 ) {

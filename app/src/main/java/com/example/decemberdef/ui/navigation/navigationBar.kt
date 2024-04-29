@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
@@ -50,8 +51,8 @@ fun navigationBar(navController: NavController) {
                         Icon(
                             imageVector = ImageVector.vectorResource(id = screen.icon),
                             contentDescription = screen.title,
-                            tint = if (selected) MaterialTheme.colorScheme.inversePrimary
-                            else MaterialTheme.colorScheme.onPrimaryContainer
+                            tint = if (selected) MaterialTheme.colorScheme.primary
+                            else Color.Black
                         )
                         if (selected) {
                             Text(
@@ -61,7 +62,7 @@ fun navigationBar(navController: NavController) {
                                     fontFamily = roboto,
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 12.sp,
-                                    color = MaterialTheme.colorScheme.inversePrimary
+                                    color = MaterialTheme.colorScheme.primary
 
                                 )
                             )

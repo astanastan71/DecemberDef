@@ -1,8 +1,11 @@
 package com.example.decemberdef.ui.screens.listApp
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -10,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.decemberdef.data.Direction
 import com.example.decemberdef.ui.navigation.HomeRoute
+import com.example.decemberdef.ui.screens.homeScreen.components.taskEditor
 import com.example.decemberdef.ui.screens.listApp.components.directionsList
 import com.example.decemberdef.ui.screens.listApp.components.taskList
 import com.example.decemberdef.ui.screens.mainScreen.CollectionsListGetState
@@ -67,6 +71,10 @@ fun directionListApp(
             when (val taskListState = viewModel.taskGetState) {
                 is TaskGetState.Success ->
                     taskList(
+                        onTextExpandClick = {
+                            navController.navigate(HomeRoute.TaskAdding.name + "/${it.uid}")
+                            viewModel.setTaskEditor(it)
+                        },
                         onDateTimeConfirm = { calendar, taskId, isStart ->
                             if (uiState != null) {
                                 viewModel.setDateAndTimeTaskStart(
@@ -144,6 +152,19 @@ fun directionListApp(
                 is TaskGetState.Loading -> {}
                 is TaskGetState.Error ->
                     Text(text = "ERROR")
+            }
+        }
+        composable(route = HomeRoute.TaskAdding.name + "/{task_uid}") {
+            Box(modifier = Modifier.fillMaxSize()) {
+                taskEditor(
+                    task = viewModel.uiState.value.taskForTextEditor,
+                    isNewTask = false,
+                    onOldTaskChange = { task, text ->
+                        if (uiState != null) {
+                            viewModel.setTaskDescription(text, uiState.value.uid, task.uid)
+                        }
+                    }
+                )
             }
         }
     }

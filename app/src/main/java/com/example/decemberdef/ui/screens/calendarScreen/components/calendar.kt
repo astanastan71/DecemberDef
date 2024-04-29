@@ -156,6 +156,7 @@ fun horizontalMonthCalendar(
                         selectedDate = if (selectedDate == day.date) null else day.date
                         filteredTaskList =
                             taskList.filter { task -> timestampToLocalDate(task.timeStart.seconds) == day.date } as MutableList<Task>
+                        filteredTaskList.sortBy { it.timeStart }
                     }
                 }
             )

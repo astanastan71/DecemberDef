@@ -91,6 +91,7 @@ fun taskList(
     onTaskDescriptionClick: (RichTextState, String) -> Unit,
     viewModel: DirectionListViewModel,
     tasks: List<Task>,
+    onTextExpandClick: (Task) -> Unit = {},
     deleteTask: (Task) -> Unit,
     onTitleChange: (String, String) -> Unit,
     scheduleNotification: (Long, String, String, Boolean, String, Boolean) -> Unit = { _, _, _, _, _, _ -> },
@@ -125,6 +126,7 @@ fun taskList(
                 scheduleNotification = scheduleNotification,
                 cancelNotification = cancelNotification,
                 taskState = taskState,
+                onTextExpandClick = onTextExpandClick,
                 index = index
             )
         }
@@ -174,6 +176,7 @@ fun taskItem(
     scheduleNotification: (Long, String, String, Boolean, String, Boolean) -> Unit = { _, _, _, _, _, _ -> },
     cancelNotification: (Int, String, String, Boolean, String, Boolean) -> Unit = { _, _, _, _, _, _ -> },
     index: Int = 0,
+    onTextExpandClick: (Task) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -182,8 +185,8 @@ fun taskItem(
     val keyboardController = LocalSoftwareKeyboardController.current
     var expanded by remember { mutableStateOf(false) }
     val taskEditorState = rememberRichTextState()
-    val dateStateStart = rememberDatePickerState(initialDisplayMode = DisplayMode.Input)
-    val dateStateEnd = rememberDatePickerState(initialDisplayMode = DisplayMode.Input)
+    var dateStateStart = rememberDatePickerState(initialDisplayMode = DisplayMode.Picker)
+    val dateStateEnd = rememberDatePickerState(initialDisplayMode = DisplayMode.Picker)
     var isDone by remember { mutableStateOf(item.completed) }
     val openDialog = remember { mutableStateOf(false) }
     var isStartNotificationActive by remember { mutableStateOf(item.startNotificationActive) }
@@ -255,6 +258,7 @@ fun taskItem(
                     .fillMaxWidth()
                     .padding(4.dp)
                     .clickable {
+                        if(!readOnly)
                         openDialog.value = true
                     },
                 horizontalAlignment = Alignment.Start,
@@ -300,82 +304,85 @@ fun taskItem(
         if (expanded) {
             Row(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.weight(4f)) {
-                    Row(modifier = Modifier.fillMaxSize()) {
-                        IconButton(onClick = {
-                            when (paragraphStyle) {
-                                ParagraphStyle(textAlign = TextAlign.Start) -> {
-                                    paragraphStyle = ParagraphStyle(textAlign = TextAlign.Center)
-                                }
+                    if (!readOnly){
+                        Row(modifier = Modifier.fillMaxSize()) {
+                            IconButton(onClick = {
+                                when (paragraphStyle) {
+                                    ParagraphStyle(textAlign = TextAlign.Start) -> {
+                                        paragraphStyle = ParagraphStyle(textAlign = TextAlign.Center)
+                                    }
 
-                                ParagraphStyle(textAlign = TextAlign.Center) -> {
-                                    paragraphStyle = ParagraphStyle(textAlign = TextAlign.End)
-                                }
+                                    ParagraphStyle(textAlign = TextAlign.Center) -> {
+                                        paragraphStyle = ParagraphStyle(textAlign = TextAlign.End)
+                                    }
 
-                                ParagraphStyle(textAlign = TextAlign.End) -> {
-                                    paragraphStyle = ParagraphStyle(textAlign = TextAlign.Start)
+                                    ParagraphStyle(textAlign = TextAlign.End) -> {
+                                        paragraphStyle = ParagraphStyle(textAlign = TextAlign.Start)
+                                    }
                                 }
                             }
-                        }
-                        ) {
-                            Icon(
-                                imageVector =
-                                when (paragraphStyle) {
-                                    ParagraphStyle(textAlign = TextAlign.Start) -> Icons.Default.AlignHorizontalLeft
-                                    ParagraphStyle(textAlign = TextAlign.Center) ->
-                                        Icons.Default.AlignHorizontalCenter
+                            ) {
+                                Icon(
+                                    imageVector =
+                                    when (paragraphStyle) {
+                                        ParagraphStyle(textAlign = TextAlign.Start) -> Icons.Default.AlignHorizontalLeft
+                                        ParagraphStyle(textAlign = TextAlign.Center) ->
+                                            Icons.Default.AlignHorizontalCenter
 
-                                    ParagraphStyle(textAlign = TextAlign.End) ->
-                                        Icons.Default.AlignHorizontalRight
+                                        ParagraphStyle(textAlign = TextAlign.End) ->
+                                            Icons.Default.AlignHorizontalRight
 
-                                    else -> {
-                                        Icons.Default.Face
-                                    }
-                                },
-                                contentDescription = stringResource(R.string.Bold),
-                                modifier = Modifier.padding(5.dp)
-                            )
-                        }
-                        IconButton(onClick = {
-                            taskEditorState.toggleSpanStyle(
-                                SpanStyle(
-                                    fontWeight = FontWeight.Bold
+                                        else -> {
+                                            Icons.Default.Face
+                                        }
+                                    },
+                                    contentDescription = stringResource(R.string.Bold),
+                                    modifier = Modifier.padding(5.dp)
                                 )
-                            )
-                            boldSelected = !boldSelected
-                        }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.FormatBold,
-                                contentDescription = stringResource(R.string.Bold),
-                                tint = if (!boldSelected) {
-                                    Color.Gray
-                                } else {
-                                    Color.Black
-                                },
-                                modifier = Modifier.padding(5.dp)
-                            )
-                        }
-                        IconButton(onClick = {
-                            taskEditorState.toggleSpanStyle(
-                                SpanStyle(
-                                    textDecoration = TextDecoration.Underline
+                            }
+                            IconButton(onClick = {
+                                taskEditorState.toggleSpanStyle(
+                                    SpanStyle(
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 )
-                            )
-                            underlinedSelected = !underlinedSelected
-                        }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.FormatUnderlined,
-                                contentDescription = stringResource(R.string.underlined),
-                                tint = if (!underlinedSelected) {
-                                    Color.Gray
-                                } else {
-                                    Color.Black
-                                },
-                                modifier = Modifier.padding(5.dp)
-                            )
+                                boldSelected = !boldSelected
+                            }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FormatBold,
+                                    contentDescription = stringResource(R.string.Bold),
+                                    tint = if (!boldSelected) {
+                                        Color.Gray
+                                    } else {
+                                        Color.Black
+                                    },
+                                    modifier = Modifier.padding(5.dp)
+                                )
+                            }
+                            IconButton(onClick = {
+                                taskEditorState.toggleSpanStyle(
+                                    SpanStyle(
+                                        textDecoration = TextDecoration.Underline
+                                    )
+                                )
+                                underlinedSelected = !underlinedSelected
+                            }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FormatUnderlined,
+                                    contentDescription = stringResource(R.string.underlined),
+                                    tint = if (!underlinedSelected) {
+                                        Color.Gray
+                                    } else {
+                                        Color.Black
+                                    },
+                                    modifier = Modifier.padding(5.dp)
+                                )
+                            }
                         }
                     }
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
@@ -414,14 +421,15 @@ fun taskItem(
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
+                            horizontalArrangement = Arrangement.Start
                         ) {
                             dateTimeItem(
                                 dateState = dateStateStart,
                                 dateItem = item.timeStart.toDate().toLocaleString(),
                                 item = item,
                                 onDateTimeConfirm = onDateTimeConfirm,
-                                isStart = true
+                                isStart = true,
+                                readOnly = readOnly
                             )
                             if (!readOnly) {
                                 IconButton(onClick = {
@@ -468,14 +476,15 @@ fun taskItem(
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
+                        horizontalArrangement = Arrangement.Start
                     ) {
                         dateTimeItem(
                             dateState = dateStateEnd,
                             dateItem = item.timeEnd.toDate().toLocaleString(),
                             item = item,
                             onDateTimeConfirm = onDateTimeConfirm,
-                            isStart = false
+                            isStart = false,
+                            readOnly = readOnly
                         )
 
                     }
@@ -493,23 +502,36 @@ fun taskItem(
                             horizontalArrangement = Arrangement.Center
                         ) {
                             IconButton(onClick = {
-                                if (readOnly) {
-                                } else {
-                                    isDone = !isDone
-                                    onCompletionStatusClick(isDone, item.uid)
-                                }
+                                isDone = !isDone
+                                onCompletionStatusClick(isDone, item.uid)
                             }
                             ) {
                                 Icon(
                                     imageVector = ImageVector.vectorResource(id = R.drawable.is_done),
                                     contentDescription = stringResource(R.string.is_done),
                                     tint = if (isDone)
-                                        Color.Green
+                                        MaterialTheme.colorScheme.primary
                                     else
-                                        Color.Red,
+                                        Color.Gray,
                                     modifier = Modifier.padding(5.dp)
                                 )
                             }
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            IconButton(onClick = {
+                                onTextExpandClick(item)
+                            }
+                            ) {
+                                Icon(
+                                    imageVector = ImageVector.vectorResource(id = R.drawable.expand),
+                                    contentDescription = stringResource(R.string.expand_text),
+                                    modifier = Modifier.padding(5.dp)
+                                )
+                            }
+
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -561,11 +583,13 @@ fun dateTimeItem(
     dateItem: String,
     item: Task,
     isStart: Boolean,
+    readOnly: Boolean,
     onDateTimeConfirm: (Long, String, Boolean) -> Unit
 ) {
     var expandedDatePicker by remember { mutableStateOf(false) }
     var expandedTimePicker by remember { mutableStateOf(false) }
     Row(modifier = Modifier.clickable {
+        if (!readOnly)
         expandedDatePicker = true
     })
     {

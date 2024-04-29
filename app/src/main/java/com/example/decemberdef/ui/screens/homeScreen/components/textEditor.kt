@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.decemberdef.R
+import com.example.decemberdef.data.Task
 import com.example.decemberdef.ui.theme.DecemberDefTheme
 import com.example.decemberdef.ui.theme.roboto
 import com.github.skydoves.colorpicker.compose.ColorEnvelope
@@ -60,10 +62,16 @@ import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
 
 @Composable
 fun taskEditor(
-    onTaskClick: () -> Unit,
-    taskEditorState: RichTextState,
+    onTaskClick: () -> Unit = {},
+    onOldTaskChange: (Task, RichTextState) -> Unit = { _, _ -> },
+    task: Task = Task(),
+    isNewTask: Boolean = true,
+    taskEditorState: RichTextState = rememberRichTextState(),
     modifier: Modifier = Modifier.fillMaxSize()
 ) {
+    LaunchedEffect(Unit) {
+        taskEditorState.setHtml(task.description)
+    }
     val controller = rememberColorPickerController()
     var paragraphStyle by remember { mutableStateOf(ParagraphStyle(textAlign = TextAlign.Start)) }
     var boldSelected by rememberSaveable { mutableStateOf(false) }
@@ -226,7 +234,13 @@ fun taskEditor(
                 horizontalAlignment = Alignment.End
             ) {
                 IconButton(onClick = {
-                    onTaskClick()
+                    if (isNewTask) {
+                        onTaskClick()
+                    }
+                    else {
+                        onOldTaskChange(task, taskEditorState)
+                    }
+
                 }
                 ) {
                     Icon(
@@ -250,7 +264,8 @@ fun taskEditor(
                     .fillMaxSize()
                     .clickable {
                     },
-                state = taskEditorState
+                state = taskEditorState,
+                readOnly = false
             )
         }
     }

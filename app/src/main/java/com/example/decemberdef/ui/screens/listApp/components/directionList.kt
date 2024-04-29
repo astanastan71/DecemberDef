@@ -302,8 +302,10 @@ fun directionItem(
                                     ParagraphStyle(textAlign = TextAlign.Start) -> Icons.Default.AlignHorizontalLeft
                                     ParagraphStyle(textAlign = TextAlign.Center) ->
                                         Icons.Default.AlignHorizontalCenter
+
                                     ParagraphStyle(textAlign = TextAlign.End) ->
                                         Icons.Default.AlignHorizontalRight
+
                                     else -> {
                                         Icons.Default.Face
                                     }
@@ -380,6 +382,15 @@ fun directionItem(
                             )
                         )
                     }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Прогресс: " + direction.progress.toString() + " из " + direction.count.toString(),
+                            modifier = Modifier.padding(5.dp)
+                        )
+                    }
 
                 }
                 Column(
@@ -388,15 +399,6 @@ fun directionItem(
                         .padding(5.dp),
                     horizontalAlignment = Alignment.End
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = "Прогресс: " + direction.progress.toString(),
-                            modifier = Modifier.padding(5.dp)
-                        )
-                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
@@ -446,7 +448,9 @@ fun directionItem(
 
                     }
 
+
                 }
+
 
             }
 

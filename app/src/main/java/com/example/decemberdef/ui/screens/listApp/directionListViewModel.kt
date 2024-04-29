@@ -66,6 +66,15 @@ class DirectionListViewModel(
         return user?.uid
     }
 
+    fun setTaskEditor(task: Task){
+        _uiState.update { currentState ->
+            currentState.copy(
+                taskForTextEditor = task
+            )
+        }
+
+    }
+
     fun setTaskCompletionStatus(
         status: Boolean,
         uID: String,
