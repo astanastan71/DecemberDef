@@ -247,6 +247,16 @@ class DefaultMainRepository(
         }
     }
 
+    override suspend fun getSingleDirectionForLink(
+        userID: String,
+        directionId: String
+    ): Direction {
+        return db.collection("users")
+            .document(userID)
+            .collection("directions").document(directionId).get().await()
+            .toObject(Direction::class.java) ?: Direction()
+    }
+
     private fun Query.snapshotFlow(): Flow<QuerySnapshot> = callbackFlow {
         val listenerRegistration = addSnapshotListener() { value, error ->
             if (error != null) {

@@ -77,6 +77,18 @@ class MainScreenViewModel(
         }
     }
 
+    fun updateCurrentDirectionFromLink(parameter: String){
+        viewModelScope.launch {
+            val parts = parameter.split("AndAlso")
+            val direction = mainRepository.getSingleDirectionForLink(parts[1], parts[0])
+            _uiState.update { currentState ->
+                currentState.copy(
+                    currentDirectionLink = direction
+                )
+            }
+        }
+    }
+
     fun addOtherUserDirection(parameter: String, tasks: List<Task>) {
         val parts = parameter.split("AndAlso")
         viewModelScope.launch {

@@ -1,5 +1,7 @@
 package com.example.decemberdef.ui.screens.calendarScreen.components
 
+import android.content.ContentValues.TAG
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -21,15 +23,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,7 +41,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.decemberdef.data.Task
-import com.example.decemberdef.ui.screens.listApp.components.taskItem
 import com.example.decemberdef.ui.theme.DecemberDefTheme
 import com.example.decemberdef.ui.theme.roboto
 import com.kizitonwose.calendar.compose.HorizontalCalendar
@@ -54,6 +53,7 @@ import com.kizitonwose.calendar.core.WeekDay
 import com.kizitonwose.calendar.core.WeekDayPosition
 import com.kizitonwose.calendar.core.atStartOfMonth
 import com.kizitonwose.calendar.core.daysOfWeek
+import java.text.SimpleDateFormat
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -64,15 +64,19 @@ import java.util.Locale
 
 @Composable
 fun horizontalMonthCalendar(
-    taskList: List<Task> = listOf()
+    taskList: List<Task> = listOf(),
+    filteredTaskList: MutableList<Task>,
+    selectedDate: LocalDate,
+    isWeekMode: Boolean,
+    updateSelectedDate: (LocalDate) -> Unit,
+    updateFilteredTaskList: (LocalDate) -> Unit,
+    updateMode: (Boolean) -> Unit
 ) {
     val currentMonth = remember { YearMonth.now() }
     val startMonth = remember { currentMonth.minusMonths(100) } // Adjust as needed
     val endMonth = remember { currentMonth.plusMonths(100) } // Adjust as needed
     val currentDate = remember { LocalDate.now() }
     val daysOfWeek = remember { daysOfWeek() }
-
-    var filteredTaskList by remember { mutableStateOf<MutableList<Task>>(mutableListOf()) }
 
     val state = rememberCalendarState(
         startMonth = startMonth,
@@ -88,9 +92,7 @@ fun horizontalMonthCalendar(
         firstDayOfWeek = daysOfWeek.first(),
     )
 
-    var selectedDate by remember { mutableStateOf<LocalDate?>(LocalDate.now()) }
     val taskState = rememberLazyListState()
-    var isWeekMode by remember { mutableStateOf(false) }
     val density = LocalDensity.current
 
     Column() {
@@ -113,7 +115,7 @@ fun horizontalMonthCalendar(
             Switch(
                 checked = isWeekMode,
                 onCheckedChange = {
-                    isWeekMode = it
+                    updateMode(it)
                 },
                 modifier = Modifier.padding(
                     top = 2.dp,
@@ -153,10 +155,9 @@ fun horizontalMonthCalendar(
                         day = day,
                         isSelected = selectedDate == day.date
                     ) { day ->
-                        selectedDate = if (selectedDate == day.date) null else day.date
-                        filteredTaskList =
-                            taskList.filter { task -> timestampToLocalDate(task.timeStart.seconds) == day.date } as MutableList<Task>
-                        filteredTaskList.sortBy { it.timeStart }
+                        if (selectedDate == day.date) null else updateSelectedDate(day.date)
+                        updateFilteredTaskList(day.date)
+                        Log.d(TAG, "selectedDate = $selectedDate")
                     }
                 }
             )
@@ -180,9 +181,8 @@ fun horizontalMonthCalendar(
                         day = day,
                         isSelected = selectedDate == day.date,
                         onClick = { day ->
-                            selectedDate = if (selectedDate == day.date) null else day.date
-                            filteredTaskList =
-                                taskList.filter { task -> timestampToLocalDate(task.timeStart.seconds) == day.date } as MutableList<Task>
+                            if (selectedDate == day.date) null else updateSelectedDate(day.date)
+                            updateFilteredTaskList(day.date)
                         },
                         tasksList = taskList
                     )
@@ -195,18 +195,60 @@ fun horizontalMonthCalendar(
         }
 
         LazyColumn(contentPadding = PaddingValues(5.dp), state = taskState) {
-            itemsIndexed(filteredTaskList) { index, task ->
-                taskItem(
-                    readOnly = true,
+            itemsIndexed(filteredTaskList) { _, task ->
+//                taskItem(
+//                    readOnly = true,
+//                    item = task,
+//                    modifier = Modifier.padding(8.dp),
+//                    onTaskDescriptionClick = { _, _ -> },
+//                    index = index,
+//                    taskState = taskState
+//                )
+                calendarTaskItem(
                     item = task,
-                    modifier = Modifier.padding(8.dp),
-                    onTaskDescriptionClick = { _, _ -> },
-                    index = index,
-                    taskState = taskState
+                    modifier = Modifier.padding(8.dp)
                 )
             }
         }
     }
+}
+
+@Composable
+fun calendarTaskItem(
+    item: Task,
+    modifier: Modifier
+) {
+    val formatter = SimpleDateFormat("HH:mm")
+    Card(modifier = modifier) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.weight(3f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = item.title, fontSize = 20.sp,
+                    fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
+                    modifier = Modifier.padding(10.dp)
+                )
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = formatter.format(item.timeStart.toDate()),
+                    fontSize = 20.sp,
+                    fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
+                    modifier = Modifier.padding(10.dp)
+                )
+            }
+
+        }
+
+    }
+
 }
 
 @Composable
@@ -330,8 +372,22 @@ fun DaysOfWeekTitle(daysOfWeek: List<DayOfWeek>) {
 fun horizontalMonthCalendarPreview() {
     DecemberDefTheme {
         Surface {
-            horizontalMonthCalendar()
+            horizontalMonthCalendar(
+                listOf(),
+                mutableListOf(),
+                LocalDate.now(),
+                false,
+                {},
+                {},
+                {}
+            )
 
         }
     }
+}
+
+@Composable
+@Preview
+fun taskViewerPreview() {
+    calendarTaskItem(item = Task(), modifier = Modifier.padding(8.dp))
 }

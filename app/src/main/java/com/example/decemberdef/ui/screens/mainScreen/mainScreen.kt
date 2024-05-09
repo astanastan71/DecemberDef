@@ -1,5 +1,6 @@
 package com.example.decemberdef.ui.screens.mainScreen
 
+import android.widget.Toast
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -52,6 +54,8 @@ fun mainScreen(
     mainScreenViewModel: MainScreenViewModel = viewModel(factory = MainScreenViewModel.Factory)
 ) {
     val navController = rememberNavController()
+
+    val context = LocalContext.current
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -187,17 +191,22 @@ fun mainScreen(
             composable(route = Route.LinkScreen.route) {
                 if (parameter != null) {
                     mainScreenViewModel.getTasksDataFromLink(parameter)
+                    mainScreenViewModel.updateCurrentDirectionFromLink(parameter)
                 }
                 when (val tasksListGetState = mainScreenViewModel.tasksListGetState) {
                     is TasksListGetState.Success -> {
                         val tasks =
                             tasksListGetState.tasks
+                        val direction = mainScreenViewModel.uiState.collectAsState().value.currentDirectionLink
                         linkApp(
+                            direction = direction,
                             taskList = tasks,
                             parameter = parameter,
                             addOtherUserDirection = {
                                 if (parameter != null) {
                                     mainScreenViewModel.addOtherUserDirection(parameter, tasks)
+                                    Toast.makeText(context, "Направление добавлено", Toast.LENGTH_SHORT)
+                                        .show()
                                 }
                             }
                         )

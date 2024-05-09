@@ -589,7 +589,6 @@ fun dateTimeItem(
     var expandedDatePicker by remember { mutableStateOf(false) }
     var expandedTimePicker by remember { mutableStateOf(false) }
     Row(modifier = Modifier.clickable {
-        if (!readOnly)
         expandedDatePicker = true
     })
     {

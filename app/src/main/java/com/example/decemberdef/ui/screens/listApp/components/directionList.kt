@@ -461,7 +461,7 @@ fun directionItem(
 @Composable
 fun Share(viewModel: DirectionListViewModel, direction: Direction, text: String, context: Context) {
     Button(onClick = {
-        val deepLink = "https://sites.google.com/view/pensell" // Your deep link
+        val deepLink = "https://sites.google.com/view/studentsapp" // Your deep link
         val packageName = "com.example.decemberdef"
         Firebase.dynamicLinks.shortLinkAsync {
             longLink = Uri.parse(
