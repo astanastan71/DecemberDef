@@ -80,7 +80,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun directionsList(
-    onDirectionClick: (Direction) -> Unit,
+    onDirectionClick: (Boolean, Direction) -> Unit,
     viewModel: DirectionListViewModel,
     setSharedStatus: (Boolean, String) -> Unit,
     onDescriptionClick: (RichTextState, String) -> Unit,
@@ -120,6 +120,7 @@ fun directionsList(
                     setSharedStatus = setSharedStatus,
                     onDirectionDelete = onDirectionDelete,
                     index = index,
+                    readOnly = direction.monitored,
                     listState = listState,
                     modifier = Modifier
                         .padding(8.dp)
@@ -155,7 +156,7 @@ fun addDirectionItem(
 @Composable
 fun directionItem(
     direction: Direction,
-    onDirectionClick: (Direction) -> Unit = {},
+    onDirectionClick: (Boolean, Direction) -> Unit = { _, _ -> },
     onDirectionDescriptionClick: (RichTextState, String) -> Unit,
     link: String,
     viewModel: DirectionListViewModel,
@@ -164,6 +165,7 @@ fun directionItem(
     onDirectionDelete: (String) -> Unit,
     listState: LazyListState,
     index: Int,
+    readOnly: Boolean = false,
     modifier: Modifier
 ) {
     var paragraphStyle by remember { mutableStateOf(ParagraphStyle(textAlign = TextAlign.Start)) }
@@ -200,7 +202,7 @@ fun directionItem(
     }
     Card(
         modifier = modifier.clickable {
-            onDirectionClick(direction)
+            onDirectionClick(direction.monitored, direction)
             Log.d(ContentValues.TAG, "directionItem usage")
 
         }
@@ -231,7 +233,8 @@ fun directionItem(
                     .fillMaxWidth()
                     .padding(4.dp)
                     .clickable {
-                        openDialog.value = true
+                        if (!readOnly)
+                            openDialog.value = true
                     },
                 horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.Center
@@ -279,87 +282,90 @@ fun directionItem(
         if (expanded) {
             Row(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.weight(3f)) {
-                    Row(modifier = Modifier.fillMaxSize()) {
-                        IconButton(onClick = {
-                            when (paragraphStyle) {
-                                ParagraphStyle(textAlign = TextAlign.Start) -> {
-                                    paragraphStyle = ParagraphStyle(textAlign = TextAlign.Center)
-                                }
+                    if (!readOnly) {
+                        Row(modifier = Modifier.fillMaxSize()) {
+                            IconButton(onClick = {
+                                when (paragraphStyle) {
+                                    ParagraphStyle(textAlign = TextAlign.Start) -> {
+                                        paragraphStyle =
+                                            ParagraphStyle(textAlign = TextAlign.Center)
+                                    }
 
-                                ParagraphStyle(textAlign = TextAlign.Center) -> {
-                                    paragraphStyle = ParagraphStyle(textAlign = TextAlign.End)
-                                }
+                                    ParagraphStyle(textAlign = TextAlign.Center) -> {
+                                        paragraphStyle = ParagraphStyle(textAlign = TextAlign.End)
+                                    }
 
-                                ParagraphStyle(textAlign = TextAlign.End) -> {
-                                    paragraphStyle = ParagraphStyle(textAlign = TextAlign.Start)
+                                    ParagraphStyle(textAlign = TextAlign.End) -> {
+                                        paragraphStyle = ParagraphStyle(textAlign = TextAlign.Start)
+                                    }
                                 }
                             }
-                        }
-                        ) {
-                            Icon(
-                                imageVector =
-                                when (paragraphStyle) {
-                                    ParagraphStyle(textAlign = TextAlign.Start) -> Icons.Default.AlignHorizontalLeft
-                                    ParagraphStyle(textAlign = TextAlign.Center) ->
-                                        Icons.Default.AlignHorizontalCenter
+                            ) {
+                                Icon(
+                                    imageVector =
+                                    when (paragraphStyle) {
+                                        ParagraphStyle(textAlign = TextAlign.Start) -> Icons.Default.AlignHorizontalLeft
+                                        ParagraphStyle(textAlign = TextAlign.Center) ->
+                                            Icons.Default.AlignHorizontalCenter
 
-                                    ParagraphStyle(textAlign = TextAlign.End) ->
-                                        Icons.Default.AlignHorizontalRight
+                                        ParagraphStyle(textAlign = TextAlign.End) ->
+                                            Icons.Default.AlignHorizontalRight
 
-                                    else -> {
-                                        Icons.Default.Face
-                                    }
-                                },
-                                contentDescription = stringResource(R.string.Bold),
-                                modifier = Modifier.padding(5.dp)
-                            )
-                        }
-                        IconButton(onClick = {
-                            descriptionEditorState.toggleSpanStyle(
-                                SpanStyle(
-                                    fontWeight = FontWeight.Bold
+                                        else -> {
+                                            Icons.Default.Face
+                                        }
+                                    },
+                                    contentDescription = stringResource(R.string.Bold),
+                                    modifier = Modifier.padding(5.dp)
                                 )
-                            )
-                            boldSelected = !boldSelected
-                        }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.FormatBold,
-                                contentDescription = stringResource(R.string.Bold),
-                                tint = if (!boldSelected) {
-                                    Color.Gray
-                                } else {
-                                    Color.Black
-                                },
-                                modifier = Modifier.padding(5.dp)
-                            )
-                        }
-                        IconButton(onClick = {
-                            descriptionEditorState.toggleSpanStyle(
-                                SpanStyle(
-                                    textDecoration = TextDecoration.Underline
+                            }
+                            IconButton(onClick = {
+                                descriptionEditorState.toggleSpanStyle(
+                                    SpanStyle(
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 )
-                            )
-                            underlinedSelected = !underlinedSelected
-                        }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.FormatUnderlined,
-                                contentDescription = stringResource(R.string.underlined),
-                                tint = if (!underlinedSelected) {
-                                    Color.Gray
-                                } else {
-                                    Color.Black
-                                },
-                                modifier = Modifier.padding(5.dp)
-                            )
+                                boldSelected = !boldSelected
+                            }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FormatBold,
+                                    contentDescription = stringResource(R.string.Bold),
+                                    tint = if (!boldSelected) {
+                                        Color.Gray
+                                    } else {
+                                        Color.Black
+                                    },
+                                    modifier = Modifier.padding(5.dp)
+                                )
+                            }
+                            IconButton(onClick = {
+                                descriptionEditorState.toggleSpanStyle(
+                                    SpanStyle(
+                                        textDecoration = TextDecoration.Underline
+                                    )
+                                )
+                                underlinedSelected = !underlinedSelected
+                            }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FormatUnderlined,
+                                    contentDescription = stringResource(R.string.underlined),
+                                    tint = if (!underlinedSelected) {
+                                        Color.Gray
+                                    } else {
+                                        Color.Black
+                                    },
+                                    modifier = Modifier.padding(5.dp)
+                                )
+                            }
                         }
                     }
                     Row(modifier = Modifier.fillMaxSize()) {
                         RichTextEditor(
                             state = descriptionEditorState,
                             enabled = true,
-                            readOnly = false,
+                            readOnly = readOnly,
                             modifier = Modifier
                                 .padding(5.dp)
                                 .fillMaxWidth()
@@ -393,67 +399,64 @@ fun directionItem(
                     }
 
                 }
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(5.dp),
-                    horizontalAlignment = Alignment.End
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
+                if (!readOnly) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(5.dp),
+                        horizontalAlignment = Alignment.End
                     ) {
-                        Share(
-                            viewModel = viewModel,
-                            direction = direction,
-                            text = link,
-                            context = LocalContext.current
-                        )
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        IconButton(onClick = {
-                            shared = !shared
-                            setSharedStatus(shared, direction.uid)
-                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
                         ) {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(id = R.drawable.share_lock),
-                                contentDescription = stringResource(R.string.share_lock),
-                                tint = if (shared) {
-                                    Color.Gray
-                                } else {
-                                    Color.Black
-                                },
-                                modifier = Modifier.padding(5.dp)
+                            Share(
+                                viewModel = viewModel,
+                                direction = direction,
+                                text = link,
+                                context = LocalContext.current
                             )
                         }
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        IconButton(onClick = {
-                            onDirectionDelete(direction.uid)
-                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
                         ) {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(id = R.drawable.delete),
-                                contentDescription = stringResource(R.string.delete),
-                                modifier = Modifier.padding(5.dp)
-                            )
+                            IconButton(onClick = {
+                                shared = !shared
+                                setSharedStatus(shared, direction.uid)
+                            }
+                            ) {
+                                Icon(
+                                    imageVector = ImageVector.vectorResource(id = R.drawable.share_lock),
+                                    contentDescription = stringResource(R.string.share_lock),
+                                    tint = if (shared) {
+                                        Color.Gray
+                                    } else {
+                                        Color.Black
+                                    },
+                                    modifier = Modifier.padding(5.dp)
+                                )
+                            }
                         }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            IconButton(onClick = {
+                                onDirectionDelete(direction.uid)
+                            }
+                            ) {
+                                Icon(
+                                    imageVector = ImageVector.vectorResource(id = R.drawable.delete),
+                                    contentDescription = stringResource(R.string.delete),
+                                    modifier = Modifier.padding(5.dp)
+                                )
+                            }
 
+                        }
                     }
-
-
                 }
-
-
             }
-
         }
     }
 }

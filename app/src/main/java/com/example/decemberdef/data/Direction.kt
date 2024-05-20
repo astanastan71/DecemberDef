@@ -8,5 +8,7 @@ data class Direction(
     var uid: String = "no id",
     val progress: Int = 0,
     val count: Int = 0,
-    val shared: Boolean = false
+    val shared: Boolean = false,
+    val userId: String = "",
+    var monitored: Boolean = false
 )

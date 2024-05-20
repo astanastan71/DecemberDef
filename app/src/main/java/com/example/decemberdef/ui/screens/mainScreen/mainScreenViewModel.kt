@@ -59,6 +59,7 @@ class MainScreenViewModel(
     init {
         getCollectionsData()
         getUserData()
+        getMonitoredDirectionList()
     }
 
     fun getUserData() {
@@ -96,6 +97,14 @@ class MainScreenViewModel(
         }
     }
 
+    fun monitorDirection(parameter: String){
+        val parts = parameter.split("AndAlso")
+        viewModelScope.launch {
+            mainRepository.monitorOtherUserDirection(parts[1], parts[0])
+        }
+
+    }
+
     private fun getCollectionsData() {
         viewModelScope.launch {
             collectionsListGetState = try {
@@ -130,6 +139,16 @@ class MainScreenViewModel(
                 TasksListGetState.Success(mainRepository.collectTaskData(directions))
             } catch (e: Exception) {
                 TasksListGetState.Error
+            }
+        }
+    }
+
+    private fun getMonitoredDirectionList(){
+        viewModelScope.launch {
+            _uiState.update { currentState ->
+                currentState.copy(
+                    monitoredDirectionList = mainRepository.getMonitoredDirectionsList()
+                )
             }
         }
     }

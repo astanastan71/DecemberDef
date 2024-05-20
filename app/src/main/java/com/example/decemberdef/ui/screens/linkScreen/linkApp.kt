@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Monitor
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,7 +34,8 @@ fun linkApp(
     direction: Direction,
     taskList: List<Task>,
     parameter: String?,
-    addOtherUserDirection: () -> Unit
+    addOtherUserDirection: () -> Unit,
+    monitorDirection: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -58,6 +61,16 @@ fun linkApp(
                     Icon(
                         imageVector = ImageVector.vectorResource(id = R.drawable.add),
                         contentDescription = stringResource(R.string.add),
+                        modifier = Modifier.padding(5.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                IconButton(
+                    onClick = monitorDirection
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Monitor,
+                        contentDescription = stringResource(R.string.monitor),
                         modifier = Modifier.padding(5.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
@@ -104,7 +117,12 @@ val tasksTest = listOf(
 fun linkAppPreview() {
     DecemberDefTheme {
         Surface() {
-            linkApp(direction = Direction(), taskList = tasksTest, parameter = "asdasdasdasdsa") {}
+            linkApp(
+                direction = Direction(),
+                taskList = tasksTest,
+                parameter = "asdasdasdasdsa",
+                {},
+                {})
         }
     }
 }

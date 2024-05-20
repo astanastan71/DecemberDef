@@ -9,6 +9,7 @@ import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlinx.coroutines.flow.Flow
 
 interface MainRepository {
+    suspend fun getMonitoredDirectionsList(): MutableList<Direction>
     suspend fun getSingleDirectionForLink(userID: String, directionId: String): Direction
     suspend fun getPermanentAccount(email: String, password: String): AnonSignUpState
     suspend fun userInfoUpdate(userName: String)
@@ -23,9 +24,10 @@ interface MainRepository {
     fun getUser(): FirebaseUser?
     suspend fun deleteTask(direction: Direction, task: Task)
     suspend fun deleteDirection(directionId: String)
-    suspend fun getCurrentDirection(directionId: String): Flow<Direction>?
+    suspend fun getCurrentDirection(userID: String, directionId: String): Flow<Direction>?
     suspend fun anonSignInCheck(): LogInState
     suspend fun getDirectionTasks(directionId: String): TaskGetState
+    suspend fun getMonitoredDirectionTasks(directionId: String, userID: String): TaskGetState
     suspend fun getDirectionTasksForAll(directionId: String): Flow<MutableList<Task>>?
     suspend fun setNotificationId(taskId: String, directionId: String, start: Boolean, id: Int)
     suspend fun cancelNotification(taskId: String, directionId: String, start: Boolean)
@@ -49,6 +51,7 @@ interface MainRepository {
         directionProgress: Int
     )
 
+    suspend fun monitorOtherUserDirection(userID: String, directionId: String)
     suspend fun addOtherUserDirection(userID: String, directionId: String, tasks: List<Task>)
     suspend fun setDirectionStatus(isDone: Boolean, directionId: String)
     suspend fun setDirectionDescription(text: RichTextState, directionId: String)

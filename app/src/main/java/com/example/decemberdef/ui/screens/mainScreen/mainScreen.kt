@@ -197,7 +197,8 @@ fun mainScreen(
                     is TasksListGetState.Success -> {
                         val tasks =
                             tasksListGetState.tasks
-                        val direction = mainScreenViewModel.uiState.collectAsState().value.currentDirectionLink
+                        val direction =
+                            mainScreenViewModel.uiState.collectAsState().value.currentDirectionLink
                         linkApp(
                             direction = direction,
                             taskList = tasks,
@@ -205,7 +206,22 @@ fun mainScreen(
                             addOtherUserDirection = {
                                 if (parameter != null) {
                                     mainScreenViewModel.addOtherUserDirection(parameter, tasks)
-                                    Toast.makeText(context, "Направление добавлено", Toast.LENGTH_SHORT)
+                                    Toast.makeText(
+                                        context,
+                                        "Направление добавлено",
+                                        Toast.LENGTH_SHORT
+                                    )
+                                        .show()
+                                }
+                            },
+                            monitorDirection = {
+                                if (parameter != null) {
+                                    mainScreenViewModel.monitorDirection(parameter)
+                                    Toast.makeText(
+                                        context,
+                                        "Направление транслируется",
+                                        Toast.LENGTH_SHORT
+                                    )
                                         .show()
                                 }
                             }
@@ -234,7 +250,7 @@ fun mainScreen(
                         mainScreenViewModel.getTasksData(
                             directionsListGetState.directions.collectAsState(
                                 initial = mutableListOf()
-                            ).value
+                            ).value + uiState.value.monitoredDirectionList
                         )
                         when (val tasksListGetState = mainScreenViewModel.tasksListGetState) {
                             is TasksListGetState.Success -> {
@@ -259,7 +275,8 @@ fun mainScreen(
             }
             composable(route = BottomNavItem.DirectionChooser.route) {
                 directionListApp(
-                    directionListState = mainScreenViewModel.collectionsListGetState
+                    directionListState = mainScreenViewModel.collectionsListGetState,
+                    monitoredDirections = uiState.value.monitoredDirectionList
                 )
             }
 

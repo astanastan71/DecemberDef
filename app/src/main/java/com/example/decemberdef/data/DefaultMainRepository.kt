@@ -27,6 +27,7 @@ class DefaultMainRepository(
     private var user: FirebaseUser?,
 ) : MainRepository {
 
+    //Регистрация анонимного аккаунта
     override suspend fun getPermanentAccount(email: String, password: String): AnonSignUpState {
         val credential = EmailAuthProvider.getCredential(email, password)
         try {
@@ -49,6 +50,7 @@ class DefaultMainRepository(
 
     }
 
+    //Обновление пользовательской информации
     override suspend fun userInfoUpdate(
         userName: String
     ) {
@@ -63,6 +65,7 @@ class DefaultMainRepository(
             }
     }
 
+    // Получение пользовательской информации
     override suspend fun getUserData(): User {
         val localUser = user
         if (localUser != null) {
@@ -114,6 +117,7 @@ class DefaultMainRepository(
         user = firebaseUser
     }
 
+    // первичное добавление данных
     override suspend fun addCustomTaskAndDirection(textState: RichTextState) {
         val localUser = user
         if (localUser != null) {
@@ -129,7 +133,8 @@ class DefaultMainRepository(
                     Direction(
                         uid = customCollectionId,
                         progress = 0,
-                        count = 1
+                        count = 1,
+                        userId = localUser.uid
                     )
                 )
 
@@ -152,6 +157,7 @@ class DefaultMainRepository(
         }
     }
 
+    // добавление задачи в направление
     override suspend fun addCustomTask(direction: Direction) {
         try {
             val localUser = user
@@ -200,6 +206,7 @@ class DefaultMainRepository(
         }
     }
 
+    // добавление направления
     override suspend fun addCustomDirection() {
         try {
             val localUser = user
@@ -215,7 +222,8 @@ class DefaultMainRepository(
                     .set(
                         Direction(
                             uid = customCollectionId,
-                            progress = 0
+                            progress = 0,
+                            userId = localUser.uid
                         ) // назначаем идентификатор в качестве значения атрибута
                     )
                     .addOnCompleteListener {
@@ -235,6 +243,7 @@ class DefaultMainRepository(
 
     }
 
+    //получение всех направлений
     private suspend fun getDirectionsFromFirestore(): QuerySnapshot? {
         val localUser = user
         return if (localUser != null) {
@@ -247,6 +256,7 @@ class DefaultMainRepository(
         }
     }
 
+    //получения направления из ссылки
     override suspend fun getSingleDirectionForLink(
         userID: String,
         directionId: String
@@ -271,6 +281,7 @@ class DefaultMainRepository(
         }
     }
 
+    //оформление данных в виде потока
     private fun DocumentReference.snapshotFlow(): Flow<Direction> = callbackFlow {
         val listenerRegistration = addSnapshotListener() { value, error ->
             if (error != null) {
@@ -290,7 +301,7 @@ class DefaultMainRepository(
         }
     }
 
-
+    //получение списка направлений
     override fun getDirectionsList(): Flow<List<Direction>>? {
         val localUser = user
         return if (localUser != null) {
@@ -306,6 +317,7 @@ class DefaultMainRepository(
         }
     }
 
+    //получения задач из ссылки
     override suspend fun getTasksListFromLink(userID: String, directionId: String): List<Task> {
         return db.collection("users")
             .document(userID)
@@ -315,7 +327,7 @@ class DefaultMainRepository(
             .get().await().toObjects(Task::class.java)
     }
 
-
+    //получения всех задач по клику
     override suspend fun getDirectionTasks(directionId: String): TaskGetState {
         try {
             val localUser = user
@@ -342,6 +354,30 @@ class DefaultMainRepository(
         }
     }
 
+    override suspend fun getMonitoredDirectionTasks(
+        directionId: String,
+        userID: String
+    ): TaskGetState {
+        return try {
+            Log.d(TAG, "MESSAGE: User is not NULL")
+            TaskGetState.Success(
+                db.collection("users")
+                    .document(userID)
+                    .collection("directions")
+                    .document(directionId)
+                    .collection("tasks")
+                    .snapshotFlow()
+                    .map { querySnapshot ->
+                        querySnapshot.toObjects(Task::class.java)
+                    }
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "MESSAGE: Error getting documents: ", e)
+            return TaskGetState.Error
+        }
+    }
+
+    //получение всех направлений для отображения в календаре
     override suspend fun getDirectionTasksForAll(directionId: String): Flow<MutableList<Task>>? {
         try {
             val localUser = user
@@ -366,6 +402,7 @@ class DefaultMainRepository(
         }
     }
 
+    //назначение уведомления
     override suspend fun setNotificationId(
         taskId: String, directionId: String, start: Boolean, id: Int
     ) {
@@ -409,6 +446,7 @@ class DefaultMainRepository(
         }
     }
 
+    //отмена уведомления
     override suspend fun cancelNotification(
         taskId: String,
         directionId: String,
@@ -454,6 +492,7 @@ class DefaultMainRepository(
         }
     }
 
+    //проверка на уведомление
     override suspend fun isStartNotificationActiveChange(
         taskId: String,
         directionId: String,
@@ -483,6 +522,7 @@ class DefaultMainRepository(
         }
     }
 
+    //получение данных задач
     override suspend fun collectTaskData(directions: List<Direction>): List<Task> {
         val collectedTask: MutableList<Task> = mutableListOf()
         val localUser = user
@@ -505,6 +545,7 @@ class DefaultMainRepository(
         }
     }
 
+    //получение направления другого пользователя
     override suspend fun getOtherUserDirection(userID: String): Flow<List<Direction>>? {
         val localUser = user
         return if (localUser != null) {
@@ -521,6 +562,7 @@ class DefaultMainRepository(
 
     }
 
+    //измненеие приватности направления
     override suspend fun setDirectionShareMode(share: Boolean, directionId: String) {
         val localUser = user
         if (localUser != null) {
@@ -757,6 +799,54 @@ class DefaultMainRepository(
 
     }
 
+    override suspend fun monitorOtherUserDirection(userID: String, directionId: String) {
+        val localUser = user
+        if (localUser != null) {
+            val collectionPath = db.collection("users")
+                .document(localUser.uid)
+                .collection("monitor")
+            collectionPath.document().set(Link(userID, directionId)).addOnSuccessListener {
+                Log.d(TAG, "Link added!")
+            }
+                .addOnFailureListener {
+                    Log.w(TAG, "Error! $it", it)
+                }
+        }
+    }
+
+    override suspend fun getMonitoredDirectionsList(): MutableList<Direction> {
+        val localUser = user
+        if (localUser != null) {
+            val linkList = db.collection("users")
+                .document(localUser.uid).collection("monitor")
+                .get().await().toObjects(Link::class.java)
+
+            val directionList = mutableListOf<Direction>()
+
+            linkList.forEachIndexed { _, link ->
+                try {
+                    db.collection("users")
+                        .document(link.userId)
+                        .collection("directions")
+                        .document(link.directionId).get().await()
+                        .toObject(Direction()::class.java)?.let {
+                            directionList.add(
+                                it
+                            )
+                        }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Error!", e)
+                }
+            }
+            directionList.forEach {
+                it.monitored = true
+            }
+            return directionList
+        } else {
+            return mutableListOf()
+        }
+    }
+
     override suspend fun addOtherUserDirection(
         userID: String,
         directionId: String,
@@ -811,45 +901,6 @@ class DefaultMainRepository(
 
 
     }
-
-//        val userCollection: MutableList<Task> = mutableListOf()
-//        try {
-//            val collectionSnapshot = getTasksFromFirestore(directionId)
-//            if (collectionSnapshot != null) {
-//                for (document in collectionSnapshot) {
-//                    userCollection.add(document.toObject(Task::class.java))
-//                    Log.d(TAG, "MESSAGE: ATTENTION $userCollection")
-//                }
-//            } else {
-//                Log.d(TAG, "MESSAGE:  collection is empty")
-//            }
-//            return TaskGetState.Success(userCollection)
-//
-//        } catch (e: Exception) {
-//            Log.w(TAG, "MESSAGE: Error getting documents: ", e)
-//            return TaskGetState.Error
-//        }
-
-
-//    override suspend fun getDirectionsList(): List<Direction> {
-//        val userCollection: MutableList<Direction> = mutableListOf()
-//        try {
-//            val collectionSnapshot = getDirectionsFromFirestore()
-//            if (collectionSnapshot != null) {
-//                for (document in collectionSnapshot) {
-//                    userCollection.add(document.toObject(Direction::class.java))
-//                    Log.d(TAG, "MESSAGE: ATTENTION $userCollection")
-//                }
-//            } else {
-//                Log.d(TAG, "MESSAGE:  collection is empty")
-//            }
-//
-//        } catch (e: Exception) {
-//            Log.w(TAG, "MESSAGE: Error getting documents: ", e)
-//        }
-//        return userCollection.toList()
-//
-//    }
 
     override fun getUser(): FirebaseUser? {
         return user
@@ -946,18 +997,15 @@ class DefaultMainRepository(
     }
 
 
-    override suspend fun getCurrentDirection(directionId: String): Flow<Direction>? {
-        val localUser = user
-        return if (localUser != null) {
-            return db.collection("users")
-                .document(localUser.uid)
-                .collection("directions")
-                .document(directionId)
-                .snapshotFlow()
-        } else {
-            return null
-        }
-
+    override suspend fun getCurrentDirection(
+        userID: String,
+        directionId: String
+    ): Flow<Direction>? {
+        return db.collection("users")
+            .document(userID)
+            .collection("directions")
+            .document(directionId)
+            .snapshotFlow()
     }
 
     override suspend fun anonSignInCheck(): LogInState {
@@ -973,19 +1021,6 @@ class DefaultMainRepository(
         }
 
     }
-
-//    private suspend fun getTasksFromFirestore(directionId: String): QuerySnapshot? {
-//        return if (user != null) {
-//            val collectionReference = db.collection("users")
-//                .document(user.uid)
-//                .collection("directions")
-//                .document(directionId)
-//                .collection("tasks")
-//            collectionReference.get().await()
-//        } else {
-//            null
-//        }
-//    }
 
     override fun signOut() {
         auth.signOut()

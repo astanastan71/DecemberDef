@@ -91,6 +91,7 @@ fun taskList(
     onTaskDescriptionClick: (RichTextState, String) -> Unit,
     viewModel: DirectionListViewModel,
     tasks: List<Task>,
+    monitored: Boolean,
     onTextExpandClick: (Task) -> Unit = {},
     deleteTask: (Task) -> Unit,
     onTitleChange: (String, String) -> Unit,
@@ -127,7 +128,8 @@ fun taskList(
                 cancelNotification = cancelNotification,
                 taskState = taskState,
                 onTextExpandClick = onTextExpandClick,
-                index = index
+                index = index,
+                readOnly = monitored
             )
         }
     }
@@ -258,8 +260,10 @@ fun taskItem(
                     .fillMaxWidth()
                     .padding(4.dp)
                     .clickable {
-                        if(!readOnly)
-                        openDialog.value = true
+                        if (!readOnly) {
+                            openDialog.value = true
+                        }
+
                     },
                 horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.Center
@@ -304,12 +308,13 @@ fun taskItem(
         if (expanded) {
             Row(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.weight(4f)) {
-                    if (!readOnly){
+                    if (!readOnly) {
                         Row(modifier = Modifier.fillMaxSize()) {
                             IconButton(onClick = {
                                 when (paragraphStyle) {
                                     ParagraphStyle(textAlign = TextAlign.Start) -> {
-                                        paragraphStyle = ParagraphStyle(textAlign = TextAlign.Center)
+                                        paragraphStyle =
+                                            ParagraphStyle(textAlign = TextAlign.Center)
                                     }
 
                                     ParagraphStyle(textAlign = TextAlign.Center) -> {

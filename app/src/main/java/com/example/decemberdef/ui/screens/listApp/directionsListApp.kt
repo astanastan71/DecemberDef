@@ -1,5 +1,7 @@
 package com.example.decemberdef.ui.screens.listApp
 
+import android.content.ContentValues.TAG
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
@@ -22,6 +24,7 @@ import com.example.decemberdef.ui.screens.mainScreen.CollectionsListGetState
 @Composable
 fun directionListApp(
     directionListState: CollectionsListGetState,
+    monitoredDirections: List<Direction> = listOf(),
     viewModel: DirectionListViewModel = viewModel(factory = DirectionListViewModel.Factory)
 ) {
     val context = LocalContext.current
@@ -37,17 +40,17 @@ fun directionListApp(
             when (directionListState) {
                 is CollectionsListGetState.Success ->
                     directionsList(
-                        onDirectionClick = {
-                            viewModel.getDirectionTasks(it)
+                        onDirectionClick = { monitored, direction ->
+                            viewModel.getDirectionTasks(monitored, direction)
                             navController.navigate(
-                                route = HomeRoute.TaskScreen.name + "/${it.uid}"
+                                route = HomeRoute.TaskScreen.name + "/${direction.uid}"
                             )
                         },
                         viewModel = viewModel,
                         onDescriptionClick = { text, uID ->
                             viewModel.setDirectionDescription(text, uID)
                         },
-                        directions = directionListState.directions.collectAsState(listOf()).value,
+                        directions = directionListState.directions.collectAsState(listOf()).value + monitoredDirections,
                         link = viewModel.uiState.collectAsState().value.currentLink,
                         onTitleChange = { title, directionId ->
                             viewModel.setDirectionTitle(title, directionId)
@@ -70,55 +73,47 @@ fun directionListApp(
         composable(route = HomeRoute.TaskScreen.name + "/{direction_uid}") {
             when (val taskListState = viewModel.taskGetState) {
                 is TaskGetState.Success ->
-                    taskList(
-                        onTextExpandClick = {
-                            navController.navigate(HomeRoute.TaskAdding.name + "/${it.uid}")
-                            viewModel.setTaskEditor(it)
-                        },
-                        onDateTimeConfirm = { calendar, taskId, isStart ->
-                            if (uiState != null) {
+                    if (uiState != null) {
+                        Log.d(TAG, "${uiState.value.uid}")
+                        taskList(
+                            monitored = viewModel.uiState.collectAsState().value.isCurrentDirectionMonitored,
+                            onTextExpandClick = {
+                                navController.navigate(HomeRoute.TaskAdding.name + "/${it.uid}")
+                                viewModel.setTaskEditor(it)
+                            },
+                            onDateTimeConfirm = { calendar, taskId, isStart ->
                                 viewModel.setDateAndTimeTaskStart(
                                     calendar,
                                     uiState.value.uid,
                                     taskId,
                                     isStart
                                 )
-                            }
-                        },
-                        onCompletionStatusClick = { status, uID ->
-                            if (uiState != null) {
+                            },
+                            onCompletionStatusClick = { status, uID ->
                                 viewModel.setTaskCompletionStatus(
                                     status,
                                     uID,
                                     uiState.value.uid,
                                     uiState.value.progress
                                 )
-                            }
-                        },
-                        viewModel = viewModel,
-                        tasks = taskListState.tasks.collectAsState(
-                            initial =
-                            listOf()
-                        ).value,
-                        onTaskDescriptionClick = { text, taskUid ->
-                            if (uiState != null) {
+                            },
+                            viewModel = viewModel,
+                            tasks = taskListState.tasks.collectAsState(
+                                initial =
+                                listOf()
+                            ).value,
+                            onTaskDescriptionClick = { text, taskUid ->
                                 viewModel.setTaskDescription(text, uiState.value.uid, taskUid)
-                            }
 
-                        },
-                        onTitleChange = { title, taskId ->
-                            if (uiState != null) {
+                            },
+                            onTitleChange = { title, taskId ->
                                 viewModel.setTaskTitle(title, taskId, uiState.value.uid)
-                            }
-                        },
-                        deleteTask = { task ->
-                            if (uiState != null) {
+                            },
+                            deleteTask = { task ->
                                 viewModel.deleteTask(uiState.value, task)
-                            }
-                        },
-                        scheduleNotification = { time, title, description, start, id, active ->
-                            if (viewModel.checkNotificationPermissions()) {
-                                if (uiState != null) {
+                            },
+                            scheduleNotification = { time, title, description, start, id, active ->
+                                if (viewModel.checkNotificationPermissions()) {
                                     viewModel.scheduleNotification(
                                         time,
                                         title,
@@ -130,10 +125,8 @@ fun directionListApp(
                                         active
                                     )
                                 }
-                            }
-                        },
-                        cancelNotification = { notificationId, title, description, start, id, active ->
-                            if (uiState != null) {
+                            },
+                            cancelNotification = { notificationId, title, description, start, id, active ->
                                 viewModel.deleteNotification(
                                     notificationId,
                                     title,
@@ -144,10 +137,10 @@ fun directionListApp(
                                     context,
                                     start
                                 )
-                            }
 
-                        }
-                    )
+                            }
+                        )
+                    }
 
                 is TaskGetState.Loading -> {}
                 is TaskGetState.Error ->

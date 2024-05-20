@@ -66,7 +66,7 @@ class DirectionListViewModel(
         return user?.uid
     }
 
-    fun setTaskEditor(task: Task){
+    fun setTaskEditor(task: Task) {
         _uiState.update { currentState ->
             currentState.copy(
                 taskForTextEditor = task
@@ -160,7 +160,10 @@ class DirectionListViewModel(
         viewModelScope.launch {
             _uiState.update { currentState ->
                 currentState.copy(
-                    currentDirection = mainRepository.getCurrentDirection(direction.uid)
+                    currentDirection = mainRepository.getCurrentDirection(
+                        direction.userId,
+                        direction.uid
+                    )
                 )
             }
         }
@@ -190,11 +193,28 @@ class DirectionListViewModel(
         }
     }
 
-    fun getDirectionTasks(direction: Direction) {
+    fun getDirectionTasks(monitored: Boolean, direction: Direction) {
         viewModelScope.launch {
-            taskGetState = mainRepository.getDirectionTasks(direction.uid)
+            taskGetState = if (monitored) {
+                changeCurrentDirection(direction = direction)
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        isCurrentDirectionMonitored = true
+                        )
+                }
+                mainRepository.getDirectionTasks(direction.uid)
+            } else {
+                changeCurrentDirection(direction)
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        isCurrentDirectionMonitored = false
+                    )
+                }
+                mainRepository.getMonitoredDirectionTasks(direction.uid, direction.userId)
+            }
+
         }
-        changeCurrentDirection(direction)
+
     }
 
     fun addCustomDirection() {
