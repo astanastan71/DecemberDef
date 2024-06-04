@@ -477,6 +477,30 @@ fun taskItem(
                                     )
                                 }
                             }
+                            else {
+                                IconButton(onClick = {
+                                        if (milliseconds != null) {
+                                            scheduleNotification(
+                                                milliseconds,
+                                                item.title,
+                                                HtmlCompat.fromHtml(
+                                                    item.description,
+                                                    HtmlCompat.FROM_HTML_MODE_COMPACT
+                                                ).toString(),
+                                                true,
+                                                item.uid,
+                                                true
+                                            )
+                                        }
+                                }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.NotificationAdd,
+                                        contentDescription = stringResource(R.string.create_notification),
+                                        modifier = Modifier.padding(5.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                     Row(

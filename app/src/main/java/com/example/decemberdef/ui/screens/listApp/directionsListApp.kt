@@ -4,6 +4,8 @@ import android.content.ContentValues.TAG
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -21,10 +23,13 @@ import com.example.decemberdef.ui.screens.listApp.components.taskList
 import com.example.decemberdef.ui.screens.mainScreen.CollectionsListGetState
 
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun directionListApp(
     directionListState: CollectionsListGetState,
     monitoredDirections: List<Direction> = listOf(),
+    pullRefreshState: PullRefreshState,
+    refreshing: Boolean,
     viewModel: DirectionListViewModel = viewModel(factory = DirectionListViewModel.Factory)
 ) {
     val context = LocalContext.current
@@ -40,6 +45,11 @@ fun directionListApp(
             when (directionListState) {
                 is CollectionsListGetState.Success ->
                     directionsList(
+                        deleteMonitoredDirection = {
+                            viewModel.deleteMonitoredDirection(it)
+                        },
+                        refreshing = refreshing,
+                        pullRefreshState = pullRefreshState,
                         onDirectionClick = { monitored, direction ->
                             viewModel.getDirectionTasks(monitored, direction)
                             navController.navigate(

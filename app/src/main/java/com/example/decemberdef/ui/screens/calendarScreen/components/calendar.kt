@@ -226,11 +226,22 @@ fun calendarTaskItem(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = item.title, fontSize = 20.sp,
-                    fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
-                    modifier = Modifier.padding(10.dp)
-                )
+                Row(){
+                    Text(
+                        text = item.directionName, fontSize = 10.sp,
+                        fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(10.dp)
+                    )
+                }
+                Row(){
+                    Text(
+                        text = item.title, fontSize = 20.sp,
+                        fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
+                        modifier = Modifier.padding(10.dp)
+                    )
+                }
+
             }
             Column(
                 modifier = Modifier.weight(1f),

@@ -13,6 +13,7 @@ interface MainRepository {
     suspend fun getSingleDirectionForLink(userID: String, directionId: String): Direction
     suspend fun getPermanentAccount(email: String, password: String): AnonSignUpState
     suspend fun userInfoUpdate(userName: String)
+    suspend fun deleteMonitoredDirection(linkId:String)
     suspend fun getUserData(): User
     fun signOut()
     fun updateUser(firebaseUser: FirebaseUser?)

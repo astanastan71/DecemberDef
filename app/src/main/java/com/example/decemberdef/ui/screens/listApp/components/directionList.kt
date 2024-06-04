@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AlignHorizontalCenter
 import androidx.compose.material.icons.filled.AlignHorizontalLeft
@@ -31,6 +33,9 @@ import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.FormatBold
 import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.PullRefreshState
+import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -78,8 +83,10 @@ import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun directionsList(
+    refreshing: Boolean,
     onDirectionClick: (Boolean, Direction) -> Unit,
     viewModel: DirectionListViewModel,
     setSharedStatus: (Boolean, String) -> Unit,
@@ -87,6 +94,8 @@ fun directionsList(
     directions: List<Direction>,
     onTitleChange: (String, String) -> Unit,
     onDirectionDelete: (String) -> Unit,
+    pullRefreshState: PullRefreshState,
+    deleteMonitoredDirection: (String) -> Unit,
     link: String
 ) {
     val listState = rememberLazyListState()
@@ -98,8 +107,10 @@ fun directionsList(
             imgURL = "https://cdn-icons-png.flaticon.com/512/7666/7666164.png"
         )
     )
-    Column(
-        modifier = Modifier
+    Box(
+        modifier = Modifier.pullRefresh(
+            pullRefreshState
+        )
     ) {
         LazyColumn(contentPadding = PaddingValues(top = 5.dp), state = listState) {
             items(addList) {
@@ -122,11 +133,13 @@ fun directionsList(
                     index = index,
                     readOnly = direction.monitored,
                     listState = listState,
+                    deleteMonitoredDirection = deleteMonitoredDirection,
                     modifier = Modifier
                         .padding(8.dp)
                 )
             }
         }
+        PullRefreshIndicator(refreshing, pullRefreshState, Modifier.align(Alignment.Center))
     }
 }
 
@@ -166,6 +179,7 @@ fun directionItem(
     listState: LazyListState,
     index: Int,
     readOnly: Boolean = false,
+    deleteMonitoredDirection: (String) -> Unit,
     modifier: Modifier
 ) {
     var paragraphStyle by remember { mutableStateOf(ParagraphStyle(textAlign = TextAlign.Start)) }
@@ -181,6 +195,7 @@ fun directionItem(
     var expanded by remember { mutableStateOf(false) }
     var shared by remember { mutableStateOf(direction.shared) }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
+
 
     descriptionEditorState.toggleParagraphStyle(
         paragraphStyle
@@ -399,13 +414,13 @@ fun directionItem(
                     }
 
                 }
-                if (!readOnly) {
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(5.dp),
-                        horizontalAlignment = Alignment.End
-                    ) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(5.dp),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    if (!readOnly) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center
@@ -438,22 +453,27 @@ fun directionItem(
                                 )
                             }
                         }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            IconButton(onClick = {
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        IconButton(onClick = {
+                            if (readOnly){
+                                deleteMonitoredDirection(direction.monitoredLinkId)
+                            }
+                            else {
                                 onDirectionDelete(direction.uid)
                             }
-                            ) {
-                                Icon(
-                                    imageVector = ImageVector.vectorResource(id = R.drawable.delete),
-                                    contentDescription = stringResource(R.string.delete),
-                                    modifier = Modifier.padding(5.dp)
-                                )
-                            }
-
                         }
+                        ) {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(id = R.drawable.delete),
+                                contentDescription = stringResource(R.string.delete),
+                                modifier = Modifier.padding(5.dp)
+                            )
+                        }
+
                     }
                 }
             }

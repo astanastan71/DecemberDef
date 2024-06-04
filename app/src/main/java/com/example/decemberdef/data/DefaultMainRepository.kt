@@ -145,7 +145,8 @@ class DefaultMainRepository(
             val task = Task(
                 title = "Без названия",
                 uid = customTaskId,
-                description = textState.toHtml()
+                description = textState.toHtml(),
+                directionId = customCollectionId
             )
 
             customCollectionPath
@@ -178,7 +179,8 @@ class DefaultMainRepository(
                     .document(customCollectionId)
                     .set(
                         Task(
-                            uid = customCollectionId
+                            uid = customCollectionId,
+                            directionId = direction.uid
                         )
                     )
                     .addOnCompleteListener {
@@ -316,6 +318,7 @@ class DefaultMainRepository(
             null
         }
     }
+
 
     //получения задач из ссылки
     override suspend fun getTasksListFromLink(userID: String, directionId: String): List<Task> {
@@ -536,6 +539,9 @@ class DefaultMainRepository(
                         .document(direction.uid)
                         .collection("tasks")
                         .get().await().toObjects(Task::class.java)
+                for (task in singleDirectionTasks) {
+                    task.directionName = direction.title
+                }
                 collectedTask += singleDirectionTasks
             }
             Log.d(TAG, "MESSAGE: Returning collected Tasks")
@@ -805,11 +811,33 @@ class DefaultMainRepository(
             val collectionPath = db.collection("users")
                 .document(localUser.uid)
                 .collection("monitor")
-            collectionPath.document().set(Link(userID, directionId)).addOnSuccessListener {
-                Log.d(TAG, "Link added!")
-            }
+            val linkId = collectionPath.document().id
+            collectionPath.document(linkId).set(Link(userID, directionId, linkId))
+                .addOnSuccessListener {
+                    Log.d(TAG, "Link added!")
+                }
                 .addOnFailureListener {
                     Log.w(TAG, "Error! $it", it)
+                }
+        }
+    }
+
+    override suspend fun deleteMonitoredDirection(
+        linkId: String
+    ) {
+        val localUser = user
+        if (localUser != null) {
+            val customLinkPath = db.collection("users")
+                .document(localUser.uid)
+                .collection("monitor")
+                .document(linkId)
+            customLinkPath
+                .delete()
+                .addOnSuccessListener {
+                    Log.d(TAG, "Document successfully deleted $linkId")
+                }
+                .addOnFailureListener {
+                    Log.e(TAG, "Error deleting document", it)
                 }
         }
     }
@@ -822,6 +850,7 @@ class DefaultMainRepository(
                 .get().await().toObjects(Link::class.java)
 
             val directionList = mutableListOf<Direction>()
+            var monitoredLinkId = ""
 
             linkList.forEachIndexed { _, link ->
                 try {
@@ -834,12 +863,14 @@ class DefaultMainRepository(
                                 it
                             )
                         }
+                    monitoredLinkId = link.id
                 } catch (e: Exception) {
                     Log.w(TAG, "Error!", e)
                 }
             }
             directionList.forEach {
                 it.monitored = true
+                it.monitoredLinkId = monitoredLinkId
             }
             return directionList
         } else {

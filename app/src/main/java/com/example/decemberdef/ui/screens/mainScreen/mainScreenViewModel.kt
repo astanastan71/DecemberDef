@@ -1,6 +1,11 @@
 package com.example.decemberdef.ui.screens.mainScreen
 
+import android.annotation.SuppressLint
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.ContentValues
+import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,9 +16,13 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.decemberdef.MainApplication
+import com.example.decemberdef.Notification
 import com.example.decemberdef.data.Direction
 import com.example.decemberdef.data.MainRepository
 import com.example.decemberdef.data.Task
+import com.example.decemberdef.messageExtra
+import com.example.decemberdef.notificationID
+import com.example.decemberdef.titleExtra
 import com.example.decemberdef.ui.screens.mainScreen.states.MainScreenState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Random
 
 sealed interface LogOutState {
     object Success : LogOutState
@@ -41,7 +51,8 @@ sealed interface TasksListGetState {
 }
 
 class MainScreenViewModel(
-    private val mainRepository: MainRepository
+    private val mainRepository: MainRepository,
+    private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainScreenState())
@@ -56,10 +67,35 @@ class MainScreenViewModel(
     var logOutState: LogOutState = LogOutState.Loading
         private set
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean>
+        get() = _isRefreshing.asStateFlow()
+
     init {
         getCollectionsData()
         getUserData()
         getMonitoredDirectionList()
+    }
+
+    fun getCollectionsData() {
+        viewModelScope.launch {
+            collectionsListGetState = try {
+                if (mainRepository.getDirectionsList() != null) {
+                    CollectionsListGetState.Success(mainRepository.getDirectionsList()!!)
+                } else {
+                    CollectionsListGetState.Loading
+                }
+            } catch (e: Exception) {
+                CollectionsListGetState.Error
+            }
+            _uiState.update { currentState ->
+                currentState.copy(
+                    monitoredDirectionList = mainRepository.getMonitoredDirectionsList()
+                )
+            }
+            _isRefreshing.emit(false)
+        }
+
     }
 
     fun getUserData() {
@@ -78,7 +114,7 @@ class MainScreenViewModel(
         }
     }
 
-    fun updateCurrentDirectionFromLink(parameter: String){
+    fun updateCurrentDirectionFromLink(parameter: String) {
         viewModelScope.launch {
             val parts = parameter.split("AndAlso")
             val direction = mainRepository.getSingleDirectionForLink(parts[1], parts[0])
@@ -97,27 +133,12 @@ class MainScreenViewModel(
         }
     }
 
-    fun monitorDirection(parameter: String){
+    fun monitorDirection(parameter: String) {
         val parts = parameter.split("AndAlso")
         viewModelScope.launch {
             mainRepository.monitorOtherUserDirection(parts[1], parts[0])
         }
 
-    }
-
-    private fun getCollectionsData() {
-        viewModelScope.launch {
-            collectionsListGetState = try {
-                if (mainRepository.getDirectionsList() != null) {
-                    CollectionsListGetState.Success(mainRepository.getDirectionsList()!!)
-                } else {
-                    CollectionsListGetState.Loading
-                }
-
-            } catch (e: Exception) {
-                CollectionsListGetState.Error
-            }
-        }
     }
 
     fun getTasksDataFromLink(parameter: String) {
@@ -143,7 +164,7 @@ class MainScreenViewModel(
         }
     }
 
-    private fun getMonitoredDirectionList(){
+    private fun getMonitoredDirectionList() {
         viewModelScope.launch {
             _uiState.update { currentState ->
                 currentState.copy(
@@ -151,6 +172,94 @@ class MainScreenViewModel(
                 )
             }
         }
+    }
+
+    fun deleteAndScheduleAllNotifications(tasks: List<Task>) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        tasks.forEach {
+            if (it.startNotificationActive) {
+                val intent = Intent(context.applicationContext, Notification::class.java)
+                intent.action = "ALARM_ACTION"
+
+                intent.putExtra(titleExtra, it.title)
+                intent.putExtra(messageExtra, it.description)
+                intent.putExtra(notificationID, it.notificationStartId)
+
+                val pendingIntent = PendingIntent.getBroadcast(
+                    context,
+                    it.notificationStartId,
+                    intent,
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                )
+                alarmManager.cancel(pendingIntent)
+
+                viewModelScope.launch {
+                    mainRepository.cancelNotification(it.uid, it.directionId, true)
+                    mainRepository.isStartNotificationActiveChange(it.uid, it.directionId, false)
+                    scheduleNotification(
+                        it.timeStart.seconds * 1000 + it.timeStart.nanoseconds / 1000000,
+                        title = it.title,
+                        description = it.description,
+                        taskId = it.uid,
+                        collectionId = it.directionId,
+                        start = true,
+                        active = true
+                    )
+                }
+            }
+        }
+    }
+
+    @SuppressLint("ScheduleExactAlarm")
+    fun scheduleNotification(
+        time: Long,
+        title: String,
+        description: String,
+        taskId: String,
+        collectionId: String,
+        start: Boolean,
+        active: Boolean
+    ) {
+        //Инициализация намерения уведомления
+        val intent = Intent(context.applicationContext, Notification::class.java)
+        intent.action = "ALARM_ACTION"
+
+        //Генерация идентификатора
+        val genId = generateUniqueIntId()
+
+        //Заполнения данными
+        intent.putExtra(titleExtra, title)
+        intent.putExtra(messageExtra, description)
+        intent.putExtra(notificationID, genId)
+
+        //Обновления данных задачи
+        viewModelScope.launch {
+            mainRepository.setNotificationId(taskId, collectionId, start, genId)
+            mainRepository.isStartNotificationActiveChange(taskId, collectionId, active)
+        }
+
+        //Отложенное намерение
+        val pendingIntent = PendingIntent.getBroadcast(
+            context.applicationContext,
+            genId,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, time, pendingIntent)
+    }
+
+    private fun generateUniqueIntId(): Int {
+        val currentTimeMillis = System.currentTimeMillis()
+        val randomNumber = Random().nextInt(Int.MAX_VALUE) // Generate random int within int range
+
+        // Ensure both operands have the same type (long) before XOR
+        val combinedLong = currentTimeMillis.toLong() xor randomNumber.toLong()
+
+        // Take the least significant bits to get an int within the desired range
+        return (combinedLong and Int.MAX_VALUE.toLong()).toInt()
     }
 
     fun signOut() {
@@ -177,7 +286,11 @@ class MainScreenViewModel(
                 val application =
                     (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MainApplication)
                 val mainRepository = application.container.mainRepository
-                MainScreenViewModel(mainRepository = mainRepository)
+                val appContext by lazy { application.applicationContext }
+                MainScreenViewModel(
+                    mainRepository = mainRepository,
+                    context = appContext
+                )
             }
         }
     }

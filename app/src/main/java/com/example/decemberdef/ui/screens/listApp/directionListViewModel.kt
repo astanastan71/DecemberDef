@@ -90,6 +90,12 @@ class DirectionListViewModel(
 
     }
 
+    fun deleteMonitoredDirection(linkId: String){
+        viewModelScope.launch {
+            mainRepository.deleteMonitoredDirection(linkId)
+        }
+    }
+
     fun updateCurrentLink(link: String) {
         _uiState.update { currentState ->
             currentState.copy(

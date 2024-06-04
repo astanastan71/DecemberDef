@@ -11,12 +11,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Card
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +51,7 @@ import com.example.decemberdef.ui.screens.mainScreen.components.topAppBarMainScr
 import com.example.decemberdef.ui.screens.signUpApp.SignUpApp
 import com.example.decemberdef.ui.theme.roboto
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun mainScreen(
     parameter: String? = null,
@@ -64,6 +68,9 @@ fun mainScreen(
     } else {
         BottomNavItem.Home.route
     }
+
+    val refreshing by mainScreenViewModel.isRefreshing.collectAsState()
+    val pullRefreshState = rememberPullRefreshState(refreshing, { mainScreenViewModel.getCollectionsData() })
 
     var showUserInfoDialog by remember { mutableStateOf(false) }
     val uiState = mainScreenViewModel.uiState.collectAsState()
@@ -256,6 +263,9 @@ fun mainScreen(
                             is TasksListGetState.Success -> {
                                 val tasks =
                                     tasksListGetState.tasks
+                                LaunchedEffect(Unit){
+                                    mainScreenViewModel.deleteAndScheduleAllNotifications(tasks)
+                                }
                                 calendarApp(taskList = tasks)
                             }
 
@@ -276,7 +286,9 @@ fun mainScreen(
             composable(route = BottomNavItem.DirectionChooser.route) {
                 directionListApp(
                     directionListState = mainScreenViewModel.collectionsListGetState,
-                    monitoredDirections = uiState.value.monitoredDirectionList
+                    monitoredDirections = uiState.value.monitoredDirectionList,
+                    pullRefreshState = pullRefreshState,
+                    refreshing = refreshing
                 )
             }
 

@@ -15,4 +15,7 @@ data class Task(
     val notificationEndId: Int = 0,
     val startNotificationActive: Boolean = false,
     val endNotificationActive: Boolean = false,
+    val directionId: String = "",
+    var directionName: String = "",
+    val timeCreated: Timestamp = Timestamp.now()
 )
