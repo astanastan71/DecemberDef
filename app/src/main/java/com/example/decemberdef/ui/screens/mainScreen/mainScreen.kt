@@ -70,7 +70,8 @@ fun mainScreen(
     }
 
     val refreshing by mainScreenViewModel.isRefreshing.collectAsState()
-    val pullRefreshState = rememberPullRefreshState(refreshing, { mainScreenViewModel.getCollectionsData() })
+    val pullRefreshState =
+        rememberPullRefreshState(refreshing, { mainScreenViewModel.getCollectionsData() })
 
     var showUserInfoDialog by remember { mutableStateOf(false) }
     val uiState = mainScreenViewModel.uiState.collectAsState()
@@ -263,7 +264,7 @@ fun mainScreen(
                             is TasksListGetState.Success -> {
                                 val tasks =
                                     tasksListGetState.tasks
-                                LaunchedEffect(Unit){
+                                LaunchedEffect(Unit) {
                                     mainScreenViewModel.deleteAndScheduleAllNotifications(tasks)
                                 }
                                 calendarApp(taskList = tasks)

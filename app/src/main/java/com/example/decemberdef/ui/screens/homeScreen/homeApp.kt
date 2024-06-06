@@ -1,10 +1,12 @@
 package com.example.decemberdef.ui.screens.homeScreen
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -22,6 +24,7 @@ fun HomeApp(
     val uiState = viewModel.uiState.collectAsState().value
     val taskEditorState = rememberRichTextState()
     val navController: NavHostController = rememberNavController()
+    val context = LocalContext.current
     Box(modifier = modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
@@ -37,10 +40,19 @@ fun HomeApp(
             composable(route = HomeRoute.TaskAdding.name) {
                 customTaskStart(
                     taskEditorState = taskEditorState,
-                    taskAdd = { viewModel.taskAdd(taskEditorState) }
+                    taskAdd = {
+                        viewModel.taskAdd(taskEditorState)
+                        Toast.makeText(
+                            context,
+                            "Задача добавлена",
+                            Toast.LENGTH_SHORT
+                        )
+                            .show()
+                        navController.navigate(HomeRoute.Start.name)
+                    }
                 )
-
             }
+
 
         }
 

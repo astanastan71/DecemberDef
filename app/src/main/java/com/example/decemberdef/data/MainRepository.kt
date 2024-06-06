@@ -17,7 +17,7 @@ interface MainRepository {
     suspend fun getUserData(): User
     fun signOut()
     fun updateUser(firebaseUser: FirebaseUser?)
-    suspend fun addCustomTaskAndDirection(text: RichTextState)
+    suspend fun addCustomTaskAndDirection(text: RichTextState): String
     suspend fun addCustomTask(direction: Direction)
     suspend fun addCustomDirection()
     fun getDirectionsList(): Flow<List<Direction>>?

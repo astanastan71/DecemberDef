@@ -98,6 +98,7 @@ fun taskList(
     scheduleNotification: (Long, String, String, Boolean, String, Boolean) -> Unit = { _, _, _, _, _, _ -> },
     cancelNotification: (Int, String, String, Boolean, String, Boolean) -> Unit = { _, _, _, _, _, _ -> },
 ) {
+    val localTasks = tasks.sortedBy { it.timeStart }
     val taskState = rememberLazyListState()
     var addList: MutableList<Task> = mutableListOf()
     addList.add(
@@ -115,7 +116,7 @@ fun taskList(
                 modifier = Modifier.padding(8.dp)
             )
         }
-        itemsIndexed(tasks.reversed()) { index, task ->
+        itemsIndexed(localTasks) { index, task ->
             taskItem(
                 item = task,
                 modifier = Modifier.padding(8.dp),

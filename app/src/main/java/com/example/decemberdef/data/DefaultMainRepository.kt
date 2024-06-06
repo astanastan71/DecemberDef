@@ -118,7 +118,7 @@ class DefaultMainRepository(
     }
 
     // первичное добавление данных
-    override suspend fun addCustomTaskAndDirection(textState: RichTextState) {
+    override suspend fun addCustomTaskAndDirection(textState: RichTextState): String {
         val localUser = user
         if (localUser != null) {
             val customCollectionPath = db.collection("users")
@@ -153,8 +153,11 @@ class DefaultMainRepository(
                 .document(customCollectionId)
                 .collection("tasks")
                 .document(customTaskId).set(task)
+            Log.d(TAG, "Custom direction and task added with directionId $customCollectionId")
+            return customCollectionId
         } else {
             Log.e(TAG, "USER IS NULL")
+            return ""
         }
     }
 
@@ -673,7 +676,8 @@ class DefaultMainRepository(
 
             customCollectionPath
                 .update(
-                    "description", text.toHtml()
+                    "description", text.toHtml(),
+                    "lastEdited", Timestamp.now()
                 )
                 .addOnSuccessListener {
                     Log.d(

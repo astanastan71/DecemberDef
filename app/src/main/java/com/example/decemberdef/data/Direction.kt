@@ -14,5 +14,6 @@ data class Direction(
     val userId: String = "",
     var monitored: Boolean = false,
     val timeCreated: Timestamp = Timestamp.now(),
-    var monitoredLinkId: String = ""
+    var monitoredLinkId: String = "",
+    val lastEdited: Timestamp = Timestamp.now()
 )

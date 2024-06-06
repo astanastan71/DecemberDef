@@ -32,8 +32,8 @@ fun directionListApp(
     refreshing: Boolean,
     viewModel: DirectionListViewModel = viewModel(factory = DirectionListViewModel.Factory)
 ) {
-    val context = LocalContext.current
     val navController = rememberNavController()
+    val context = LocalContext.current
     val uiState =
         viewModel.uiState.collectAsState().value.currentDirection?.collectAsState(initial = Direction())
     NavHost(

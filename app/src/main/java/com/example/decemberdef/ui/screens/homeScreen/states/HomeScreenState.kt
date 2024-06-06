@@ -5,5 +5,6 @@ import com.example.decemberdef.data.User
 
 data class HomeScreenState(
     val user: User,
-    val directions: List<Direction>? = null
+    val directions: List<Direction>? = null,
+    val directionId: String = ""
 )

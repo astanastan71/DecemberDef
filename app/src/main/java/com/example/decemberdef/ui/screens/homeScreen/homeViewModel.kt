@@ -19,8 +19,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
-
-
 class MainViewModel(
     private val mainRepository: MainRepository
 ) : ViewModel() {
@@ -55,7 +53,13 @@ class MainViewModel(
 
     fun taskAdd(textState: RichTextState) {
         viewModelScope.launch {
-            mainRepository.addCustomTaskAndDirection(textState)
+            _uiState.update { currentState ->
+                Log.d(TAG, "Setting uiState directionId")
+                currentState.copy(
+                    directionId = mainRepository.addCustomTaskAndDirection(textState)
+                )
+            }
+            Log.d(TAG, "uiState set with id: ${uiState.value.directionId}")
         }
     }
 

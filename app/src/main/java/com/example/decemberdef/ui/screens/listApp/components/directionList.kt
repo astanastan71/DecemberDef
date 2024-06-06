@@ -99,7 +99,7 @@ fun directionsList(
     link: String
 ) {
     val listState = rememberLazyListState()
-    var localDirections = directions
+    var localDirections = directions.sortedBy { it.lastEdited }
     var addList: MutableList<Direction> = mutableListOf()
     addList.add(
         Direction(
