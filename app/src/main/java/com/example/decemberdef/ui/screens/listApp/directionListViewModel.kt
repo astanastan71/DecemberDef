@@ -66,6 +66,16 @@ class DirectionListViewModel(
         return user?.uid
     }
 
+    fun setContinuation(
+        taskId: String,
+        directionId: String,
+        continuation: Boolean
+    ){
+        viewModelScope.launch {
+            mainRepository.setContinuation(taskId, directionId, continuation)
+        }
+    }
+
     fun setTaskEditor(task: Task) {
         _uiState.update { currentState ->
             currentState.copy(
@@ -254,7 +264,6 @@ class DirectionListViewModel(
         taskId: String,
         collectionId: String,
         active: Boolean,
-        localContext: Context,
         start: Boolean
     ) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -278,15 +287,6 @@ class DirectionListViewModel(
             mainRepository.cancelNotification(taskId, collectionId, start)
             mainRepository.isStartNotificationActiveChange(taskId, collectionId, active)
         }
-
-        AlertDialog.Builder(localContext)
-            .setTitle("Уведомление удалено")
-            .setMessage(
-                "Название: $title\nОписание: $description"
-            )
-            .setPositiveButton("Ok") { _, _ -> }
-            .show()
-
     }
 
     @SuppressLint("ScheduleExactAlarm")

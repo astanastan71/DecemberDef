@@ -39,4 +39,5 @@
     <string name="link_add">Добавить ссылку</string>
     <string name="expand_text">Открыть расширенное окно текста</string>
     <string name="monitor">Транслировать</string>
+    <string name="continued">Продолжительная задача</string>
 </resources>

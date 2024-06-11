@@ -41,6 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.decemberdef.data.Task
+import com.example.decemberdef.ui.screens.calendarScreen.FilteredTaskGetState
 import com.example.decemberdef.ui.theme.DecemberDefTheme
 import com.example.decemberdef.ui.theme.roboto
 import com.kizitonwose.calendar.compose.HorizontalCalendar
@@ -65,7 +66,7 @@ import java.util.Locale
 @Composable
 fun horizontalMonthCalendar(
     taskList: List<Task> = listOf(),
-    filteredTaskList: MutableList<Task>,
+    filteredTaskList: FilteredTaskGetState,
     selectedDate: LocalDate,
     isWeekMode: Boolean,
     updateSelectedDate: (LocalDate) -> Unit,
@@ -191,23 +192,21 @@ fun horizontalMonthCalendar(
                     DaysOfWeekTitle(daysOfWeek = daysOfWeek) // Use the title here
                 }
             )
-
         }
 
         LazyColumn(contentPadding = PaddingValues(5.dp), state = taskState) {
-            itemsIndexed(filteredTaskList) { _, task ->
-//                taskItem(
-//                    readOnly = true,
-//                    item = task,
-//                    modifier = Modifier.padding(8.dp),
-//                    onTaskDescriptionClick = { _, _ -> },
-//                    index = index,
-//                    taskState = taskState
-//                )
-                calendarTaskItem(
-                    item = task,
-                    modifier = Modifier.padding(8.dp)
-                )
+            when (filteredTaskList) {
+                is FilteredTaskGetState.Success -> {
+                    Log.d(TAG, "Creating list")
+                    itemsIndexed(filteredTaskList.tasks) { _, task ->
+                        calendarTaskItem(
+                            item = task,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                }
+
+                else -> {}
             }
         }
     }
@@ -226,7 +225,7 @@ fun calendarTaskItem(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Row(){
+                Row() {
                     Text(
                         text = item.directionName, fontSize = 10.sp,
                         fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
@@ -234,7 +233,7 @@ fun calendarTaskItem(
                         modifier = Modifier.padding(10.dp)
                     )
                 }
-                Row(){
+                Row() {
                     Text(
                         text = item.title, fontSize = 20.sp,
                         fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
@@ -243,30 +242,33 @@ fun calendarTaskItem(
                 }
 
             }
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = formatter.format(item.timeStart.toDate()),
-                    fontSize = 20.sp,
-                    fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
-                    modifier = Modifier.padding(10.dp)
-                )
+            if (!item.continued) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = formatter.format(item.timeStart.toDate()),
+                        fontSize = 20.sp,
+                        fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
+                        modifier = Modifier.padding(10.dp)
+                    )
+                }
             }
-
         }
-
     }
-
 }
 
 @Composable
 fun MonthHeader(month: String) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-        Text(text = month.toString())
+        Text(text = month)
     }
+}
+
+fun isDateInRange(date: LocalDate, startDate: LocalDate, endDate: LocalDate): Boolean {
+    return date.isAfter(startDate.minusDays(1)) && date.isBefore(endDate.plusDays(1))
 }
 
 @Composable
@@ -277,6 +279,19 @@ fun Day(
     onClick: (CalendarDay) -> Unit
 ) {
     var color: Color = MaterialTheme.colorScheme.onSurface
+    var backColor: Color = Color.Transparent
+    for (task in tasksList) {
+        if (task.continued) {
+            if (isDateInRange(
+                    day.date,
+                    timestampToLocalDate(task.timeStart.seconds),
+                    timestampToLocalDate(task.timeEnd.seconds)
+                )
+            ) {
+                backColor = MaterialTheme.colorScheme.secondaryContainer
+            }
+        }
+    }
     if (day.position == DayPosition.MonthDate) {
         if (day.date == LocalDate.now()) {
             color = Color.Green
@@ -298,7 +313,7 @@ fun Day(
             .aspectRatio(1f)
             .clip(CircleShape)
             .background(
-                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+                color = if (isSelected) MaterialTheme.colorScheme.primary else backColor
             )
             .clickable(
                 enabled = day.position == DayPosition.MonthDate,
@@ -385,7 +400,7 @@ fun horizontalMonthCalendarPreview() {
         Surface {
             horizontalMonthCalendar(
                 listOf(),
-                mutableListOf(),
+                FilteredTaskGetState.Loading,
                 LocalDate.now(),
                 false,
                 {},

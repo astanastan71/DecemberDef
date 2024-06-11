@@ -9,6 +9,7 @@ import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlinx.coroutines.flow.Flow
 
 interface MainRepository {
+    suspend fun setContinuation(taskId: String, directionId: String, continuation: Boolean)
     suspend fun getMonitoredDirectionsList(): MutableList<Direction>
     suspend fun getSingleDirectionForLink(userID: String, directionId: String): Direction
     suspend fun getPermanentAccount(email: String, password: String): AnonSignUpState

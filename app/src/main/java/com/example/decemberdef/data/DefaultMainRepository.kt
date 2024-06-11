@@ -846,6 +846,30 @@ class DefaultMainRepository(
         }
     }
 
+    override suspend fun setContinuation(taskId: String, directionId: String, continuation: Boolean) {
+        val localUser = user
+        if (localUser != null) {
+            val customCollectionPath = db.collection("users")
+                .document(localUser.uid)
+                .collection("directions")
+                .document(directionId)
+                .collection("tasks")
+                .document(taskId)
+
+            customCollectionPath
+                .update(
+                    "continued", continuation
+                )
+                .addOnSuccessListener {
+                    Log.d(
+                        TAG,
+                        "DocumentSnapshot successfully updated! Continuation: $continuation"
+                    )
+                }
+                .addOnFailureListener { e -> Log.w(TAG, "Error updating document", e) }
+        }
+    }
+
     override suspend fun getMonitoredDirectionsList(): MutableList<Direction> {
         val localUser = user
         if (localUser != null) {

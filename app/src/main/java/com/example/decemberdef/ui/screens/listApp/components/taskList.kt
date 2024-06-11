@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AlignHorizontalCenter
 import androidx.compose.material.icons.filled.AlignHorizontalLeft
 import androidx.compose.material.icons.filled.AlignHorizontalRight
+import androidx.compose.material.icons.filled.Approval
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.FormatBold
 import androidx.compose.material.icons.filled.FormatUnderlined
@@ -86,6 +87,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun taskList(
+    setContinuation: (String, Boolean) -> Unit = { _, _ -> },
     onDateTimeConfirm: (Long, String, Boolean) -> Unit,
     onCompletionStatusClick: (Boolean, String) -> Unit,
     onTaskDescriptionClick: (RichTextState, String) -> Unit,
@@ -130,7 +132,8 @@ fun taskList(
                 taskState = taskState,
                 onTextExpandClick = onTextExpandClick,
                 index = index,
-                readOnly = monitored
+                readOnly = monitored,
+                setContinuation = setContinuation
             )
         }
     }
@@ -167,6 +170,7 @@ fun addTaskItem(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun taskItem(
+    setContinuation: (String, Boolean) -> Unit = { _, _ -> },
     item: Task,
     readOnly: Boolean = false,
     onDateTimeConfirm: (Long, String, Boolean) -> Unit = { _, _, _ -> },
@@ -437,7 +441,7 @@ fun taskItem(
                                 isStart = true,
                                 readOnly = readOnly
                             )
-                            if (!readOnly) {
+                            if (!readOnly && !item.continued) {
                                 IconButton(onClick = {
                                     if (isStartNotificationActive) {
                                         cancelNotification(
@@ -477,9 +481,9 @@ fun taskItem(
                                         modifier = Modifier.padding(5.dp)
                                     )
                                 }
-                            }
-                            else {
-                                IconButton(onClick = {
+                            } else
+                                if (!item.continued) {
+                                    IconButton(onClick = {
                                         if (milliseconds != null) {
                                             scheduleNotification(
                                                 milliseconds,
@@ -493,32 +497,33 @@ fun taskItem(
                                                 true
                                             )
                                         }
+                                    }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.NotificationAdd,
+                                            contentDescription = stringResource(R.string.create_notification),
+                                            modifier = Modifier.padding(5.dp)
+                                        )
+                                    }
                                 }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.NotificationAdd,
-                                        contentDescription = stringResource(R.string.create_notification),
-                                        modifier = Modifier.padding(5.dp)
-                                    )
-                                }
-                            }
                         }
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        dateTimeItem(
-                            dateState = dateStateEnd,
-                            dateItem = item.timeEnd.toDate().toLocaleString(),
-                            item = item,
-                            onDateTimeConfirm = onDateTimeConfirm,
-                            isStart = false,
-                            readOnly = readOnly
-                        )
+                    if (item.continued) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            dateTimeItem(
+                                dateState = dateStateEnd,
+                                dateItem = item.timeEnd.toDate().toLocaleString(),
+                                item = item,
+                                onDateTimeConfirm = onDateTimeConfirm,
+                                isStart = false,
+                                readOnly = readOnly
+                            )
 
+                        }
                     }
-
                 }
                 if (!readOnly) {
                     Column(
@@ -575,6 +580,22 @@ fun taskItem(
                                     imageVector = ImageVector.vectorResource(id = R.drawable.delete),
                                     tint = MaterialTheme.colorScheme.primary,
                                     contentDescription = stringResource(R.string.delete),
+                                    modifier = Modifier.padding(5.dp)
+                                )
+                            }
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            IconButton(onClick = {
+                                setContinuation(item.uid, !item.continued)
+                            }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Approval,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    contentDescription = stringResource(R.string.continued),
                                     modifier = Modifier.padding(5.dp)
                                 )
                             }

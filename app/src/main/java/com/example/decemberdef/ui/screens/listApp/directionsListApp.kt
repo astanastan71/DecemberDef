@@ -86,6 +86,9 @@ fun directionListApp(
                     if (uiState != null) {
                         Log.d(TAG, "${uiState.value.uid}")
                         taskList(
+                            setContinuation = { taskId, contin ->
+                                viewModel.setContinuation(taskId, uiState.value.uid, contin)
+                            },
                             monitored = viewModel.uiState.collectAsState().value.isCurrentDirectionMonitored,
                             onTextExpandClick = {
                                 navController.navigate(HomeRoute.TaskAdding.name + "/${it.uid}")
@@ -144,7 +147,6 @@ fun directionListApp(
                                     id,
                                     uiState.value.uid,
                                     active,
-                                    context,
                                     start
                                 )
 
