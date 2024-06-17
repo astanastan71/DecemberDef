@@ -84,6 +84,8 @@ import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun taskList(
@@ -425,6 +427,14 @@ fun taskItem(
                                 }
                         )
                     }
+                    val formattedDateStart = SimpleDateFormat(
+                        "dd MMM yyyy г.",
+                        Locale("ru")
+                    ).format(item.timeStart.toDate())
+                    val formattedDateEnd = SimpleDateFormat(
+                        "dd MMM yyyy г.",
+                        Locale("ru")
+                    ).format(item.timeEnd.toDate())
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
@@ -435,7 +445,11 @@ fun taskItem(
                         ) {
                             dateTimeItem(
                                 dateState = dateStateStart,
-                                dateItem = item.timeStart.toDate().toLocaleString(),
+                                dateItem =
+                                if (item.continued)
+                                    formattedDateStart
+                                else
+                                    item.timeStart.toDate().toLocaleString(),
                                 item = item,
                                 onDateTimeConfirm = onDateTimeConfirm,
                                 isStart = true,
@@ -515,7 +529,8 @@ fun taskItem(
                         ) {
                             dateTimeItem(
                                 dateState = dateStateEnd,
-                                dateItem = item.timeEnd.toDate().toLocaleString(),
+                                dateItem =
+                                formattedDateEnd,
                                 item = item,
                                 onDateTimeConfirm = onDateTimeConfirm,
                                 isStart = false,
@@ -651,8 +666,19 @@ fun dateTimeItem(
                 },
                 confirmButton = {
                     Button(onClick = {
-                        expandedDatePicker = false
-                        expandedTimePicker = true
+                        if (item.continued) {
+                            expandedDatePicker = false
+                            val calendar = Calendar.getInstance()
+                            val dateInMillis = dateState.selectedDateMillis
+                            if (dateInMillis != null) {
+                                calendar.timeInMillis = dateInMillis
+                                onDateTimeConfirm(calendar.timeInMillis, item.uid, isStart)
+                            }
+                        } else {
+                            expandedDatePicker = false
+                            expandedTimePicker = true
+                        }
+
                     }
                     ) {
                         Text(text = "Ok")

@@ -43,7 +43,9 @@ fun linkApp(
         Row(
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(10.dp)) {
+            Column(modifier = Modifier
+                .padding(10.dp)
+                .weight(2f)) {
                 Text(
                     text = "Название: " + direction.title
                 )
@@ -52,7 +54,9 @@ fun linkApp(
                 )
             }
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
                 horizontalAlignment = Alignment.End
             ) {
                 IconButton(

@@ -39,7 +39,6 @@ fun HomeApp(
             }
             composable(route = HomeRoute.TaskAdding.name) {
                 customTaskStart(
-                    taskEditorState = taskEditorState,
                     taskAdd = {
                         viewModel.taskAdd(taskEditorState)
                         Toast.makeText(
