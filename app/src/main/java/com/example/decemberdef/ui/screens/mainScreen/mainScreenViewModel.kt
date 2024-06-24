@@ -159,6 +159,7 @@ class MainScreenViewModel(
             tasksListGetState = try {
                 TasksListGetState.Success(mainRepository.collectTaskData(directions))
             } catch (e: Exception) {
+                Log.e(ContentValues.TAG, "Error returning tasks for calendar: $e")
                 TasksListGetState.Error
             }
         }

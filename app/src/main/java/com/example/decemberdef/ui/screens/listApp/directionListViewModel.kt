@@ -218,7 +218,7 @@ class DirectionListViewModel(
                         isCurrentDirectionMonitored = true
                         )
                 }
-                mainRepository.getDirectionTasks(direction.uid)
+                mainRepository.getMonitoredDirectionTasks(direction.uid, direction.userId)
             } else {
                 changeCurrentDirection(direction)
                 _uiState.update { currentState ->
@@ -226,7 +226,7 @@ class DirectionListViewModel(
                         isCurrentDirectionMonitored = false
                     )
                 }
-                mainRepository.getMonitoredDirectionTasks(direction.uid, direction.userId)
+                mainRepository.getDirectionTasks(direction.uid)
             }
 
         }

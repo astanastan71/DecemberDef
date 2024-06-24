@@ -537,7 +537,7 @@ class DefaultMainRepository(
                 Log.d(TAG, "MESSAGE: collection ${direction.uid}")
                 val singleDirectionTasks =
                     db.collection("users")
-                        .document(localUser.uid)
+                        .document(direction.userId)
                         .collection("directions")
                         .document(direction.uid)
                         .collection("tasks")
@@ -582,7 +582,7 @@ class DefaultMainRepository(
 
             customCollectionPath
                 .update(
-                    "share", share
+                    "shared", share
                 )
                 .addOnSuccessListener {
                     Log.d(
