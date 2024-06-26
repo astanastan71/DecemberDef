@@ -62,7 +62,7 @@ import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
 
 @Composable
 fun taskEditor(
-    onTaskClick: () -> Unit = {},
+    onTaskClick: (RichTextState) -> Unit = {},
     onOldTaskChange: (Task, RichTextState) -> Unit = { _, _ -> },
     task: Task = Task(),
     isNewTask: Boolean = true,
@@ -235,7 +235,7 @@ fun taskEditor(
             ) {
                 IconButton(onClick = {
                     if (isNewTask) {
-                        onTaskClick()
+                        onTaskClick(taskEditorState)
                     }
                     else {
                         onOldTaskChange(task, taskEditorState)

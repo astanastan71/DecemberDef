@@ -14,7 +14,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.decemberdef.ui.navigation.HomeRoute
 import com.example.decemberdef.ui.screens.homeScreen.components.homeScreenBox
-import com.mohamedrejeb.richeditor.model.rememberRichTextState
 
 @Composable
 fun HomeApp(
@@ -22,7 +21,6 @@ fun HomeApp(
     modifier: Modifier = Modifier.fillMaxSize()
 ) {
     val uiState = viewModel.uiState.collectAsState().value
-    val taskEditorState = rememberRichTextState()
     val navController: NavHostController = rememberNavController()
     val context = LocalContext.current
     Box(modifier = modifier.fillMaxSize()) {
@@ -40,7 +38,7 @@ fun HomeApp(
             composable(route = HomeRoute.TaskAdding.name) {
                 customTaskStart(
                     taskAdd = {
-                        viewModel.taskAdd(taskEditorState)
+                        viewModel.taskAdd(it)
                         Toast.makeText(
                             context,
                             "Задача добавлена",

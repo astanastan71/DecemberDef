@@ -928,6 +928,7 @@ class DefaultMainRepository(
 
             if (direction != null) {
                 direction.uid = newDirectionId
+                direction.userId = localUser.uid
 
                 collectionPath.document(newDirectionId).set(direction).addOnSuccessListener {
                     Log.d(TAG, "OtherUser collection added!")

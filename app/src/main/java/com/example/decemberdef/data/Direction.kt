@@ -11,7 +11,7 @@ data class Direction(
     val progress: Int = 0,
     val count: Int = 0,
     val shared: Boolean = false,
-    val userId: String = "",
+    var userId: String = "",
     var monitored: Boolean = false,
     val timeCreated: Timestamp = Timestamp.now(),
     var monitoredLinkId: String = "",
